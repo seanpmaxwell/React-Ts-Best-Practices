@@ -16,7 +16,7 @@ Documentation for best practices to use with React with Typescript. Note that th
 // pick up here, create an example
 ```
 
-- Don't need to wrap DOM elements in parenthesis for `&&`:
+- Don't need to wrap DOM elements in parenthesis for `&&`. The proceeding boolean statement should be wrapped though.
 ```
 // Don't do
 {isLoading && (
@@ -33,7 +33,7 @@ Documentation for best practices to use with React with Typescript. Note that th
 }
 
 // Parenthesis are fine for ternary statements though
-{isError ? (
+{(isError && !!errMsg) ? (
   <div>
     {errMsg}
   </div>
