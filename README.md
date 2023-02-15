@@ -6,6 +6,7 @@ Documentation for best practices to use with React with Typescript. Note that th
 ## Structuring your app
 
 - Use functions for declaring components. Procedural/functional programming is the dominant trend in JavaScript and also makes it easier to decouple your DOM elements.
+- Use function-declarations with a top-down approach for components that have child-components.
 - The backbone of your React app should be under a src/pages/ folder. Create pages using declaration scripts (see link above).
 
 
