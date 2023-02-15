@@ -17,6 +17,7 @@ Documentation for best practices to use with React with Typescript. Note that th
 // SignupPage.tsx
 
 import { useState, CSSProperties } from 'react';
+import useQuery from 'some-http-hook-lib';
 
 import Spinner from '../shared-components/Spinner';
 import { useSetState } from '../custom-hooks/useSetState';
