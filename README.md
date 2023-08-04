@@ -110,4 +110,4 @@ export default SignupPage;
 
 ## Functions
 - Add return types for functions you create that are used elsewhere in your code. JSX.Elements are exceptions to this though because it's obvious what's being returned.
-- 
+- Referring to Typescript-best-practices, you should generally not put spaces in functions. But for JSX elements (which can get really large), we can put spaces in between some of the Html elements and blocks of useEffect code.
