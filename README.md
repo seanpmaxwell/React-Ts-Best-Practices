@@ -1,7 +1,7 @@
 # React-Ts-Best-Practices
 
 Documentation for best practices to use with React with Typescript. Note that this documentation builds off of <a href="https://github.com/seanpmaxwell/Typescript-Best-Practices">Typescript best practices</a>, so we won't mention practices that are already mentioned there.
-<br/>
+<br/><br/>
 
 
 ## The project folder structure
