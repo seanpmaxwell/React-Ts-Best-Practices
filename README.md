@@ -64,16 +64,16 @@ Documentation for best practices to use with React with Typescript. Note that th
 -       index.tsx
 ```
 - `styles/` various shared styles (i.e. Colors.ts)
-- `util/` miscellanous shared logic. Could modules or inventory scripts (see <a href="https://github.com/seanpmaxwell/Typescript-Best-Practices">Typescript best practices</a>).
+- `util/` miscellanous shared logic. Could be modules or inventory scripts (see <a href="https://github.com/seanpmaxwell/Typescript-Best-Practices">Typescript best practices</a>).
 
 
-## Basics of Declaring Functional Components
+## Basics of Declaring Functional-Components
 
 - Use PascalCase for naming functional-components.
 - Use functions for declaring components not classes. Procedural/functional programming is the dominant trend in JavaScript and is much more convenient for making smaller components. Use function declarations (`function`) not arrow functions for making components so that they are hoisted.
 - For components declared in the same file, follow a top down approach. That is, declare children components below the parent so that the pattern of programming for both for doing logic and creating elements stays consistent.
 - Don't place static values inside functional-components, if you do they'll have to be reinitialized everytime the component state is updated, which could affect performance for large complex applications. Place them at the top of the file under the `// **** Variables **** //` section (see <a href="https://github.com/seanpmaxwell/Typescript-Best-Practices">Typescript best practices</a>).
-- If you use TypeScript, always typesafe a functional-component's properties. For large/complex components, create an interface for the props argument (i.e. `IProps`) and place it in the `// **** Types **** //`` section of the file (see <a href="https://github.com/seanpmaxwell/Typescript-Best-Practices">Typescript best practices</a>). If you're using JSDoc, you should also typesafe the properties for shared components, but for single using components (like a the file for a page) specifying the types might be overkill. If a jsdoc custom type also gets large/complex, you could also place it in the `Types` section of your file. Both for typescript and jsdoc, you don't need to specify the return type for functional components cause its always JSX.Element. A good way to remember these rules is that whenever another developer needs to use the component you created, your typesafety should reflect that.
+- If you use TypeScript, always typesafe a functional-component's properties. For large/complex components, create an interface for the props argument (i.e. `IProps`) and place it in the `// **** Types **** //` section of the file (see <a href="https://github.com/seanpmaxwell/Typescript-Best-Practices">Typescript best practices</a>). If you're using JSDoc, you should also typesafe the properties for shared components, but for single using components (like a the file for a page) specifying the types might be overkill. If a jsdoc custom type also gets large/complex, you could also place it in the `Types` section of your file. Both for typescript and jsdoc, you don't need to specify the return type for functional components cause its always JSX.Element. A good way to remember these rules is that whenever another developer needs to use the component you created, your typesafety should reflect that.
 
 
 ## Handling state managment
