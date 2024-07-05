@@ -160,8 +160,70 @@ function Parent() {
 - This will make your code more readable cause now all variables that belong to the local state will began with `state`, and you only need one function managing them `useState()`.
 
 ### useContext()
-- If a state value in a parent component only needs to go down one layer to a child component that exists in the same file, then passing through the function properties (props) is fine; `context` or `redux` is probably overkill. If however you have a large/complex component that needs to pass data to multiple children, spread across different files, then don't use props, use `context` or `redux`.
-- If your component contains both a large amount of jsx code and a lot of logic as well, 
+- If a state value in a parent component only needs to go down one layer to a child component that exists in the same file, then passing it through the function properties (props) is fine; `context` or `redux` is probably overkill. If however you have a large/complex component that needs to pass data to multiple children, spread across different files, then don't use props, use `context` or `redux` instead.
+- If your component contains both a large amount of jsx code and a lot of logic as well whose data needs to be passed down, it might be worth it break your context and your jsx code into different files. You should append these files with `ctx.tsx`. For example, suppose your App.tsx file contains a lof of jsx code and a lot of logic for managing the user sessions, you could create a seperate App.ctx.tsx file which uses `createContext()` whose default export is the context's provider:
+```typescript
+// App.ctx.tsx
+
+import { createContext } from 'react';
+
+export const AppCtx = createContext({});
+
+function AppProvider(props) {
+  const { children } = props,
+    [ session, setSession ] = useState({});
+
+  const resetSessionData = useCallback(newData => {
+    const newSession = ...bunch of logic
+    setSession(newSession);
+  }, [setSession])
+
+  return (
+    <AppCxt.Provider value={{
+      session,
+      resetSessionData: val => resetSessionData(val),
+    }}>
+      {children}
+    </AppCxt.Provider>
+  );
+}
+
+export default AppProvider;
+
+
+// App.tsx
+
+import AppProvider from 'App.ctx.tsx';
+
+function App() {
+  return (
+    <div>
+      <AppProvider>
+        <NavBar/>
+        <Home/>
+        ...some large amount of jsx code
+      </AppProvider>
+    </div>
+  );
+}
+
+export default App;
+
+
+// Navbar.tsx
+
+import { AppCtx } from '../App.ctx';
+
+function Navbar() {
+  const { session } = useContext(AppCtx);
+  return (
+    <div>Hello {session.name}</div>
+  );
+}
+
+export default Navbar;
+
+```
 <br/>
 
 
