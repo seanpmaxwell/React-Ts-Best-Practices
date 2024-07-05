@@ -43,9 +43,9 @@ Documentation for best practices to use with React with Typescript. Note that th
 - `assets/` downloaded assets like images, third-party fonts etc
 - `common/` shared miscellaneous items like a `Paths.ts` which holds the paths of all your APIs.
 - `components/` custom react components (might not be shared like a navigation bar or shared such as a styled button you used in multiple places)
--   `/lg` single components that take up multiple files
--   `/md` single components that take up one file
--   `/sm` multiple components per file
+  - `/lg` single components that take up multiple files
+  - `/md` single components that take up one file
+  - `/sm` multiple components per file
 - `/hooks` custom hooks (i.e. useSetState.ts)
 - `/models` files for description your data (i.e. User.ts)
 - `/pages` the various pages of your application. NOTE: you should structure your pages folders in the same way as they are navigated to by the user. So if your site is like `my-site.com/home`, `my-site.com/posts/view`, and `my-site.com/post/new` the pages folder should look like:
