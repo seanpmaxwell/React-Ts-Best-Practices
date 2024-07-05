@@ -69,13 +69,86 @@ Documentation for best practices to use with React with Typescript. Note that th
 <br/>
 
 
-## Basics of Declaring Functional-Components
+## Basics of Functional-Components
+
+### Declaring
 
 - Use PascalCase for naming functional-components.
 - Use functions for declaring components not classes. Procedural/functional programming is the dominant trend in JavaScript and is much more convenient for making smaller components. Use function declarations (`function`) not arrow functions for making components so that they are hoisted.
 - For components declared in the same file, follow a top down approach. That is, declare children components below the parent so that the pattern of programming for both for doing logic and creating elements stays consistent.
-- Don't place static values inside functional-components, if you do they'll have to be reinitialized everytime the component state is updated, which could affect performance for large complex applications. Place them at the top of the file under the `// **** Variables **** //` section (see <a href="https://github.com/seanpmaxwell/Typescript-Best-Practices">Typescript best practices</a>).
 - If you use TypeScript, always typesafe a functional-component's properties. For large/complex components, create an interface for the props argument (i.e. `IProps`) and place it in the `// **** Types **** //` section of the file (see <a href="https://github.com/seanpmaxwell/Typescript-Best-Practices">Typescript best practices</a>). If you're using JSDoc, you should also typesafe the properties for shared components, but for single using components (like a the file for a page) specifying the types might be overkill. If a jsdoc custom type also gets large/complex, you could also place it in the `Types` section of your file. Both for typescript and jsdoc, you don't need to specify the return type for functional components cause its always JSX.Element. A good way to remember these rules is that whenever another developer needs to use the component you created, your typesafety should reflect that.
+
+### Organizing the code of a functional-component
+- Don't place static values inside functional-components, if you do they'll have to be reinitialized everytime the component state is updated, which could affect performance for large complex applications. Place them at the top of the file under the `// **** Variables **** //` section (see <a href="https://github.com/seanpmaxwell/Typescript-Best-Practices">Typescript best practices</a>).
+- If a function inside a functional-component is large and its logic does not need to change with the component, move it outside the component and put it in the `// **** Helper Functions **** //` section at the bottom of the file: this is will stop the logic from needing to be reinitialized each time.
+- When posititing sibling-components in relation to each other, do the positioning in the parent-component, that way all the positioning between siblings can be seen at once and we don't have to dig into the code of each individual child component to move them (see <b>Snippet 1</b>).
+
+### Component properties
+- Extract the component properties at the top of the function-component from the `props` param, don't use `props` in a bunch of places to access values. This makes it easier to intialize default values when a property is undefined and makes the code more robust because you can see if a property is no longer being used but might still be getting passed down by parent-component. Another aspect to this is that when creating a functional-component that wraps around another functional-component, it's generally a good idea to mimick the child properties as much as you can so that way you don't have to recreate/redeclare these properties again (see <b>Snippet 1</b>).
+
+### Snippet 1 
+```typescript
+import Box, { BoxProps } from '@mui/material/Box';
+
+function Parent() {
+  return (
+    <Box>
+      <Child1 mb={1}/>
+      <Child2/>
+      <SomeOtherChild/>
+    </Box>
+  );
+}
+
+
+// GOOD
+
+interface IProps1 extends BoxProps {
+  name?: string;
+  posts?: string[];
+}
+
+function Child1(props: IProps1) {
+  const {
+    name = '',
+    posts = [],
+    ...otherProps
+  } = props;
+  return (
+    <Box {...otherProps}>
+      Name: {name} Posts: {posts.length}
+    </Box>
+  );
+}
+
+
+// BAD
+
+interface IProps2 {
+  name?: string;
+  posts?: string[];
+}
+
+function Child2(props: IProps2) {
+  return (
+    <Box sx={{ mb: 2 }}>
+      Name: {props.name ?? ''} Posts: {props.posts?.length ?? 0}
+    </Box>
+  );
+}
+```
+
+- In complying with TypeScript best practices, use function-declarations for functions at the top scope of a file and arrow-functions if a function is declared inside of another function:
+```typescript
+function Parent() {
+  return (
+    <Child
+      onClick={() => doSomething()} // GOOD
+      onMouseDown={function () { ..doSomething }} // BAD
+    />
+  );
+}
+```
 <br/>
 
 
@@ -87,13 +160,14 @@ Documentation for best practices to use with React with Typescript. Note that th
 - This will make your code more readable cause now all variables that belong to the local state will began with `state`, and you only need one function managing them `useState()`.
 
 ### useContext()
-- If a state value in a parent component only needs to go down one layer to a child component that exists in the same file, then prop-drilling is fine; `context` or `redux` is probably overkill. 
+- If a state value in a parent component only needs to go down one layer to a child component that exists in the same file, then passing through the function properties (props) is fine; `context` or `redux` is probably overkill. If however you have a large/complex component that needs to pass data to multiple children, spread across different files, then don't use props, use `context` or `redux`.
+- If your component contains both a large amount of jsx code and a lot of logic as well, 
 <br/>
 
 
-## Misc
+## Misc Styling
 
-#### Conditional Elements
+### Conditional Elements
 
 - Don't need to wrap DOM elements in parenthesis for `&&`. Do use parenthesis for ternary-statements though:
 ```
