@@ -3,6 +3,7 @@
 Documentation for best practices to use with React with Typescript. Note that this documentation builds off of <a href="https://github.com/seanpmaxwell/Typescript-Best-Practices">Typescript best practices</a>, so we won't mention practices that are already mentioned there. 
 
 
+<br/>
 ## The project folder structure
 
 ### Project Folders Overview
@@ -67,6 +68,7 @@ Documentation for best practices to use with React with Typescript. Note that th
 - `util/` miscellanous shared logic. Could be modules or inventory scripts (see <a href="https://github.com/seanpmaxwell/Typescript-Best-Practices">Typescript best practices</a>).
 
 
+<br/>
 ## Basics of Declaring Functional-Components
 
 - Use PascalCase for naming functional-components.
@@ -87,6 +89,7 @@ Documentation for best practices to use with React with Typescript. Note that th
 - If a state value in a parent component only needs to go down one layer to a child component that exists in the same file, then prop-drilling is fine; `context` or `redux` is probably overkill. 
 
 
+<br/>
 ## Misc
 
 #### Conditional Elements
