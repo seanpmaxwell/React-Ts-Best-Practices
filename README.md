@@ -187,7 +187,6 @@ import Box, { BoxProps } from '@mui/material-ui/Box';
 import Button, { ButtonProps } from '@mui/material-ui/Button';
 
 import Indicator from 'components/md/Indicator';
-import Colors from 'styles/Colors.ts';
 
 
 // **** Functional Components **** //
@@ -229,7 +228,6 @@ function LoginForm(props: BoxProps) {
     <Box
       sx={{
         position: 'relative',
-        backgroundColor: Colors.Bkg.Grey, // don't do '#808080'
         ...sx,
       }}
       {...otherProps}
@@ -348,12 +346,11 @@ export default Navbar;
 <br/>
 
 
-## Misc Code Styling Rules
+## Misc Code Styling Rules (This for the most part does not include things covered by the linter but there could be some overlap)
 
 ### Conditional Elements
 
 - Don't need to wrap DOM elements in parenthesis for `&&`. Do use parenthesis for ternary-statements though:
-  
 ```.tsx
 // BAD
 {isLoading && (
@@ -382,25 +379,30 @@ export default Navbar;
 ```
 
 ### Styling the UI
-- Rules could vary depending on which library you decided to use, but generally don't hardcode hex color strings directly inside jsx elements. To keep your styling consistent, have a `src/styles/Colors.ts` file which exports a single object containing all your colors (see <b>Snippet 3</b>).
+- Rules could vary depending on which library you decided to use, but generally don't hardcode hex color strings directly inside jsx elements. To keep your styling (including colors) consistent, have a `src/styles/Colors.ts` file which exports a single object containing all your colors (see <b>Snippet 5</b>).
 
 ### Other
 - If an element only has one prop being passed, you can put it on the same row as the element name, put it to the next row if there's more than one (see <b>Snippet 5</b>).
+- Use single quotes `'` for plain JS/TS code, but use double-quotes `"` for properties on jsx elements. You can set this in the linter but I'm mentioning it cause I've seen so many projects without it.
 
 ### Snippet 5
 ```.tsx
+import Colors from 'styles/Colors.ts';
+
 function Foo() {
   return (
     <div>
 
      <div style={{
        marginBottom: 16,
-       fontSize: 12, 
+       fontSize: 12,
+        backgroundColor: Colors.Bkg.Grey, // don't do '#808080'
      }}>
        Hello
      </div>
 
      <div
+       id="how-are-you-ele"
        style={{ padding: 8 }}
        onClick={() => alert('How are you?')}
      >
