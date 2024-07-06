@@ -270,9 +270,9 @@ function LoginForm(props: BoxProps) {
 
 
 ## Handling state managment
-- State management is done using `useState`, `useContext`, and maybe `redux` if you have it. We'll cover the best practices for all of them.
+<h6>State management is done using `useState`, `useContext`, and maybe a third-party-library like `redux`. We'll cover the best practices for all of them.</h6>
 
-### useState()
+### useState() and useSetState()
 - For small components that only have one or two state values, using `useState` directly is fine, but once a component starts to have large numbers of state values, using a custom hook to handle all the state values as a single object will make your code much more readable and easier to manage. There might be libraries for this or you copy and paste the source for the custom hook <a href="https://github.com/seanpmaxwell/useSetState/blob/main/src/useSetState.ts">here</a>.
 - This will make your code more readable cause now all variables that belong to the local state will began with `state`, and you only need one function managing them `useState()`.
 
@@ -346,7 +346,8 @@ export default Navbar;
 <br/>
 
 
-## Misc Code Styling Rules <h6>(This for the most part does not include things covered by the linter but there could be some overlap)</h6>
+## Misc Code Styling Rules 
+<h6>(This for the most part does not include things covered by the linter but there could be some overlap)</h6>
 
 ### Conditional Elements
 
