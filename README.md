@@ -348,7 +348,7 @@ export default Navbar;
 <br/>
 
 
-## Misc Styling
+## Misc Code Styling Rules
 
 ### Conditional Elements
 
