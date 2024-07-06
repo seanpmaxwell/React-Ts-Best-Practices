@@ -346,7 +346,7 @@ export default Navbar;
 <br/>
 
 
-## Misc Code Styling Rules (This for the most part does not include things covered by the linter but there could be some overlap)
+## Misc Code Styling Rules <span style="font-size: 12px;">(This for the most part does not include things covered by the linter but there could be some overlap)</span>
 
 ### Conditional Elements
 
