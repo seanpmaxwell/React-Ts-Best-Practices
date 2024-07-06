@@ -171,7 +171,7 @@ function Parent() {
   return (
     <Child
       onClick={() => doSomething()} // GOOD
-      onMouseDown={function () { ..doSomething }} // BAD
+      onMouseDown={function () { ...do something else }} // BAD
     />
   );
 }
