@@ -383,3 +383,30 @@ export default Navbar;
 
 ### Styling the UI
 - Rules could vary depending on which library you decided to use, but generally don't hardcode hex color strings directly inside jsx elements. To keep your styling consistent, have a `src/styles/Colors.ts` file which exports a single object containing all your colors (see <b>Snippet 3</b>).
+
+### Other
+- If an element only has one prop being passed, you can put it on the same row as the element name, put it to the next row if there's more than one (see <b>Snippet 5</b>).
+
+### Snippet 5
+```.tsx
+function Foo() {
+  return (
+    <div>
+
+     <div style={{
+       marginBottom: 16,
+       fontSize: 12, 
+     }}>
+       Hello
+     </div>
+
+     <div
+       style={{ padding: 8 }}
+       onClick={() => alert('How are you?')}
+     >
+       How are you?
+     </div>
+    </div>
+  );
+}
+```
