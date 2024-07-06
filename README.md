@@ -280,9 +280,9 @@ function LoginForm(props: BoxProps) {
 
 ### useContext()
 - If a state value in a parent component only needs to go down one layer to a child component that exists in the same file, then passing it through the function properties (props) is fine; `context` or `redux` is probably overkill. If however you have a large/complex component that needs to pass data to multiple children, spread across different files, then don't use props, use `context` or `redux` instead.
-- If your component contains both a large amount of jsx code and a lot of logic as well whose data needs to be passed down, it might be worth it break your context and your jsx code into different files. You should append these files with `ctx.tsx`. For example, suppose your App.tsx file contains a lof of jsx code and a lot of logic for managing the user sessions, you could create a seperate App.ctx.tsx file which uses `createContext()` whose default export is the context's provider. See <b>Snippet 3</b>.
+- If your component contains both a large amount of jsx code and a lot of logic as well whose data needs to be passed down, it might be worth it break your context and your jsx code into different files. You should append these files with `ctx.tsx`. For example, suppose your App.tsx file contains a lof of jsx code and a lot of logic for managing the user sessions, you could create a seperate App.ctx.tsx file which uses `createContext()` whose default export is the context's provider. See <b>Snippet 4</b>.
 
-### Snippet 3
+### Snippet 4
 ```.tsx
 // App.ctx.tsx
 
