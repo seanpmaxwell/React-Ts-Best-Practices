@@ -52,7 +52,7 @@ Documentation for best practices to use with React with Typescript. Note that th
 -   `/pages` the various pages of your application.
   -   <b>NOTE:</b> You should try to structure your `pages/` folders as close as possible in the same way as they are navigated to by the user. So if your site is like `https://my-site.com/home`, `https://my-site.com/account`, `https://my-site.com/posts/edit`, and `https://my-site.com/posts/new` the `pages/` folder should look like how it does in <b>Snippet 1</b>. Of course this is not always possible and it's normal to not follow this to-a-tee. For example, you might have the `id` of a `Post` record inserted somewhere in your url, so it can be automatically selected when the user refreshes the browser and 'View' might be the default view for a particular post that's selected (i.e. `https://my-site.com/posts/9Z8AO5C844R` displays the <View/> component).
 -   `styles/` various shared styles (i.e. Colors.ts)z
--   `util/` miscellanous shared logic. Could be modules or inventory scripts (see <a href="https://github.com/seanpmaxwell/Typescript-Best-Practices">Typescript best practices</a>).
+-   `util/` miscellanous shared logic. Could be modules or inventory scripts .
 
 ### Structuring your app
 - In addition to what's listed above, you should name your files/folders after the React component they mean to represent. If a file represents a single-component, and there are not multiple files for that component (that includes test files and child components), name that file after the component. However, for large components that include multiple files, name the folder after the component, and name the core file `index.ts`, which is the JavaScript convention for naming the file in a folder where everything else is exported from (see <b>Snippet 1</b>).
@@ -99,7 +99,6 @@ Documentation for best practices to use with React with Typescript. Note that th
 ## Basics of Functional-Components
 
 ### Declaring
-
 - Use PascalCase for naming functional-components.
 - Use functions for declaring components not classes. Procedural/functional programming is the dominant trend in JavaScript and is much more convenient for making smaller components. Use function declarations (`function`) not arrow functions for making components so that they are hoisted.
 - For components declared in the same file, follow a top down approach. That is, declare children components below the parent so that the pattern of programming for both for doing logic and creating elements stays consistent.
@@ -109,12 +108,13 @@ Documentation for best practices to use with React with Typescript. Note that th
 - Don't place static values inside functional-components, if you do they'll have to be reinitialized everytime the component state is updated, which could affect performance for large complex applications. Place them at the top of the file under the `// **** Variables **** //` section (see <a href="https://github.com/seanpmaxwell/Typescript-Best-Practices">Typescript best practices</a>).
 - If a function inside a functional-component is large and its logic does not need to change with the component, move it outside the component and put it in the `// **** Helper Functions **** //` section at the bottom of the file: this is will stop the logic from needing to be reinitialized each time.
 - When posititing sibling-components in relation to each other, do the positioning in the parent-component, that way all the positioning between siblings can be seen at once and we don't have to dig into the code of each individual child component to move them (see <b>Snippet 2</b>).
+- Although comments (not spaces) should generally be used to separate chunks of logic within traditional functions (as mentioned in <a href="https://github.com/seanpmaxwell/Typescript-Best-Practices">Typescript best practices</a>), for jsx component-functions, we can use spacing to separate chunks of logic. Use single-spaces + comments to separate hook calls, related DOM elements with the `return` statement, and initializing related variables (see <b>Snippet 3</b>).
 
 ### Component properties
 - Extract the component properties at the top of the function-component from the `props` param, don't use `props` in a bunch of places to access values. This makes it easier to intialize default values when a property is undefined and makes the code more robust because you can see if a property is no longer being used but might still be getting passed down by parent-component. Another aspect to this is that when creating a functional-component that wraps around another functional-component, it's generally a good idea to mimick the child properties as much as you can so that way you don't have to recreate/redeclare these properties again (see <b>Snippet 2</b>).
 
 ### Snippet 2 
-```typescript
+```.tsx
 import Box, { BoxProps } from '@mui/material/Box';
 
 function Parent() {
@@ -176,6 +176,98 @@ function Parent() {
   );
 }
 ```
+
+### Snippet 3
+
+```.tsx
+import { useCallback } from 'react';
+import axios from 'axios';
+
+import Box, { BoxProps } from '@mui/material-ui/Box';
+import Button, { ButtonProps } from '@mui/material-ui/Button';
+
+import Indicator from 'components/md/Indicator';
+import Colors from 'styles/Colors.ts';
+
+
+// **** Functional Components **** //
+
+/**
+ * Login a User
+ */
+function LoginForm(props: BoxProps) {
+  const {
+    sx,
+    ...otherProps
+  } = props;
+
+  // Misc
+  const navigate = useNavigate();
+
+  // Init state
+  const [ state, setState ] = useSetState({
+    username: '',
+    password: '',
+    isLoading: false,
+  });
+
+  // Call the "submit" API
+  const submit = useCallback(async () => {
+    setState({ isLoading: true });
+    const success = await axios.post({
+      username: state.username,
+      password: state.password,
+    });
+    setState({ isLoading: false });
+    if (success) {
+      navigate('/account');
+    }
+  }, [setState, state.username, state.password, navigate]);
+
+  // Return
+  return (
+    <Box
+      sx={{
+        position: 'relative',
+        backgroundColor: Colors.Bkg.Grey,
+        ...sx,
+      }}
+      {...otherProps}
+    >
+     {/* Indicator */}
+     {state.isLoading &&
+       <Indicator/>
+     }
+
+     {/* Input Fields */}
+     <TextField
+       type="text"
+       value={state.username}
+       onChange(e => setState({ username: e.currentTargetValue })}
+     />
+     <TextField
+       type="password"
+       value={state.password}
+       onChange(e => setState({ password: e.currentTargetValue })}
+     />
+     
+     {/* Action Buttons */}
+      <Button
+        color="error"
+        onClick={() => navigate('/home')}
+      >
+        Cancel
+      </Button>
+      <Button
+        color="primary"
+        onClick={() => submit()}
+      >
+        Login
+      </Button>
+    </Box>
+  );
+}
+```
 <br/>
 
 
@@ -191,7 +283,7 @@ function Parent() {
 - If your component contains both a large amount of jsx code and a lot of logic as well whose data needs to be passed down, it might be worth it break your context and your jsx code into different files. You should append these files with `ctx.tsx`. For example, suppose your App.tsx file contains a lof of jsx code and a lot of logic for managing the user sessions, you could create a seperate App.ctx.tsx file which uses `createContext()` whose default export is the context's provider. See <b>Snippet 3</b>.
 
 ### Snippet 3
-```typescript
+```.tsx
 // App.ctx.tsx
 
 import { createContext } from 'react';
@@ -261,7 +353,8 @@ export default Navbar;
 ### Conditional Elements
 
 - Don't need to wrap DOM elements in parenthesis for `&&`. Do use parenthesis for ternary-statements though:
-```
+  
+```.tsx
 // BAD
 {isLoading && (
   <div>
