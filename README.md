@@ -48,7 +48,7 @@ Documentation for best practices to use with React with Typescript. Note that th
       - `/md` single components that take up one file
       - `/sm` multiple components per file
 -   `/hooks` custom hooks (i.e. useSetState.ts)
--   `/models` files for description your data (i.e. User.ts)
+-   `/models` modules which represent data-tables (i.e. User.ts represents the users table in the database)
 -   `/pages` the various pages of your application.
   -   <b>NOTE:</b> You should try to structure your `pages/` folders as close as possible in the same way as they are navigated to by the user. So if your site is like `https://my-site.com/home`, `https://my-site.com/account`, `https://my-site.com/posts/edit`, and `https://my-site.com/posts/new` the `pages/` folder should look like how it does in <b>Snippet 1</b>. Of course this is not always possible and it's normal to not follow this to-a-tee. For example, you might have the `id` of a `Post` record inserted somewhere in your url, so it can be automatically selected when the user refreshes the browser and 'View' might be the default view for a particular post that's selected (i.e. `https://my-site.com/posts/9Z8AO5C844R` displays the <View/> component).
 -   `styles/` various shared styles (i.e. Colors.ts)
