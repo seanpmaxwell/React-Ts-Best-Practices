@@ -274,7 +274,7 @@ function LoginForm(props: BoxProps) {
 
 ### useState() and useSetState()
 - For small components that only have one or two state values, using `useState` directly is fine, but once a component starts to have large numbers of state values, using a custom hook to handle all the state values as a single object will make your code much more readable and easier to manage. There might be libraries for this or you copy and paste the source for the custom hook <a href="https://github.com/seanpmaxwell/useSetState/blob/main/src/useSetState.ts">here</a>.
-- This will make your code more readable cause now all variables that belong to the local state will began with `state`, and you only need one function managing them `useState()`.
+- This will make your code more readable cause now all variables that belong to the local state will began with `state`, and you only need one function managing them `setState()`.
 
 ### useContext()
 - If a state value in a parent component only needs to go down one layer to a child component that exists in the same file, then passing it through the function properties (props) is fine; `context` or `redux` is probably overkill. If however you have a large/complex component that needs to pass data to multiple children, spread across different files, then don't use props, use `context` or `redux` instead.
