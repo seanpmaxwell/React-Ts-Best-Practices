@@ -380,11 +380,46 @@ export default Navbar;
 ```
 
 ### Styling the UI
-- Rules could vary depending on which library you decided to use, but generally don't hardcode hex color strings directly inside jsx elements. To keep your styling (including colors) consistent, have a `src/styles/Colors.ts` file which exports a single object containing all your colors (see <b>Snippet 5</b>).
+- Rules could vary depending on which library you decided to use, but generally don't hardcode hex color strings directly inside jsx elements. To keep your styling (including colors) consistent, have a `src/styles/Colors.ts` file which exports a single object containing all your colors (see <b>Snippet 5</b>). Also, in this object don't hardcode your hex strings in random places. At the top of the file, group your colors in a single object, which in turn, groups colors by their base color. Then, for the exported object, group your colors by the type of component property (i.e. Border) they are applied to.
 
-### Other
-- If an element only has one prop being passed, you can put it on the same row as the element name, put it to the next row if there's more than one (see <b>Snippet 5</b>).
-- Use single quotes `'` for plain JS/TS code, but use double-quotes `"` for properties on jsx elements. You can set this in the linter but I'm mentioning it cause I've seen so many projects without it.
+### Snippet 4
+```typescript
+// src/styles/Colors.ts;
+
+const Base = {
+   Grey: {
+     UltraLight: '#f2f2f2',
+     Lighter: 'e5e5e5',
+     Light: '#d3d3d3',
+     Default: '#808080',
+     Dark: '#a9a9a9',
+     Darker: '#404040',
+     UltraDark: '#0c0c0c',
+   },
+   Red: {
+     Default: '#ff0000',
+     Dark: '#8b0000',
+   },
+   White: {
+     Default: '#ffffff',
+   },
+};
+
+export default {
+  Background: {
+    Default: Base.Grey.Default,
+    White: Base.White.Default,
+    Hover: Base.Grey.Light,
+  },
+  Border: Base.Grey.Dark,
+  Text: {
+    Error: {
+      Default: Base.Red.Default,
+      Hover: Base.Red.Dark,
+    },
+  },
+};
+```
 
 ### Snippet 5
 ```.tsx
@@ -397,7 +432,7 @@ function Foo() {
      <div style={{
        marginBottom: 16,
        fontSize: 12,
-        backgroundColor: Colors.Bkg.Grey, // don't do '#808080'
+        backgroundColor: Colors.Background.Grey.Default, // don't do '#808080'
      }}>
        Hello
      </div>
@@ -413,3 +448,7 @@ function Foo() {
   );
 }
 ```
+
+### Other
+- If an element only has one prop being passed, you can put it on the same row as the element name, put it to the next row if there's more than one (see <b>Snippet 5</b>).
+- Use single quotes `'` for plain JS/TS code, but use double-quotes `"` for properties on jsx elements. You can set this in the linter but I'm mentioning it cause I've seen so many projects without it.
