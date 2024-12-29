@@ -120,11 +120,12 @@ Documentation for best practices to use with React with Typescript. Note that th
 - Use PascalCase for naming functional-components.
 - Use functions for declaring components not classes. Procedural/functional programming is the dominant trend in JavaScript and is much more convenient for making smaller components. Use function declarations (`function`) not arrow functions for making components so that they are hoisted.
 - For components declared in the same file, follow a top down approach. That is, declare children components below the parent so that the pattern of programming for both for doing logic and creating elements stays consistent.
-- If you use TypeScript, always typesafe a functional-component's properties. For large/complex components, create an interface for the props argument (i.e. `IProps`) and place it in the `// **** Types **** //` section of the file (see <a href="https://github.com/seanpmaxwell/Typescript-Best-Practices">Typescript best practices</a>). If you're using JSDoc, you should also typesafe the properties for shared components, but for single using components (like a the file for a page) specifying the types might be overkill. If a jsdoc custom type also gets large/complex, you could also place it in the `Types` section of your file. Both for typescript and jsdoc, you don't need to specify the return type for functional components cause its always JSX.Element. A good way to remember these rules is that whenever another developer needs to use the component you created, your typesafety should reflect that.
+- If you use TypeScript, always typesafe a functional-component's properties. For large/complex components, create an interface for the props argument (i.e. `IProps`) and place it in the `Types` region of the file (see <a href="https://github.com/seanpmaxwell/Typescript-Best-Practices">Typescript best practices</a>). If you're using JSDoc, you should also typesafe the properties for shared components, but for single using components (like a the file for a page) specifying the types might be overkill. If a jsdoc custom type also gets large/complex, you could also place it in the `Types` region of your file. Both for typescript and jsdoc, you don't need to specify the return type for functional components cause its always JSX.Element. A good way to remember these rules is that whenever another developer needs to use the component you created, your typesafety should reflect that.
 
 ### Organizing the code of a functional-component <a name="organizing-the-code-of-a-functional-component"></a>
-- Don't place static values inside functional-components, if you do they'll have to be reinitialized everytime the component state is updated, which could affect performance for large complex applications. Place them at the top of the file under the `// **** Variables **** //` section (see <a href="https://github.com/seanpmaxwell/Typescript-Best-Practices">Typescript best practices</a>).
-- If a function inside a functional-component is large and its logic does not need to change with the component, move it outside the component and put it in the `// **** Helper Functions **** //` section at the bottom of the file: this is will stop the logic from needing to be reinitialized each time.
+- Building off of <a href="https://github.com/seanpmaxwell/Typescript-Best-Practices">Typescript best practices</a>, create a new region for functional-components called `Components` and place it between `Run` and `Functions`, see (see <b>Snippet 3</b>).
+- Don't place static values inside functional-components, if you do they'll have to be reinitialized everytime the component state is updated, which could affect performance for large complex applications. Place them at the top of the file under the `Variables` region (see <a href="https://github.com/seanpmaxwell/Typescript-Best-Practices">Typescript best practices</a>).
+- If a function inside a functional-component is large and its logic does not need to change with the component, move it outside the component and put it in the `Functions` region at the bottom of the file: this is will stop the logic from needing to be reinitialized each time.
 - When positioning sibling-components in relation to each other, do the positioning in the parent-component, that way all the positioning between siblings can be seen at once and we don't have to dig into the code of each individual child component to move them (see <b>Snippet 2</b>).
 - Although comments (not spaces) should generally be used to separate chunks of logic within traditional functions (as mentioned in <a href="https://github.com/seanpmaxwell/Typescript-Best-Practices">Typescript best practices</a>), for jsx component-functions, we can use spacing to separate chunks of logic. Use single-spaces + comments to separate hook calls, related DOM elements within the `return` statement, and initializing related variables (see <b>Snippet 3</b>).
 - Create your hooks in the order than they are used: i.e. import direct properties at the top, then any properties from `useContext` then initialize your state, the place any onLoad API calls, hooks that listen for changes from DOM interaction should go in the order than the DOM elements are arranged, then any submission API calls at the very end. Like anything else it might make sense to use exceptions but this is generally how it should be organized.
@@ -199,6 +200,8 @@ function Parent() {
 ### Snippet 3
 
 ```.tsx
+// LoginForm.tsx
+
 import { useCallback } from 'react';
 import axios from 'axios';
 
@@ -208,7 +211,9 @@ import Button, { ButtonProps } from '@mui/material-ui/Button';
 import Indicator from 'components/md/Indicator';
 
 
-// **** Functional Components **** //
+/******************************************************************************
+                               Components
+******************************************************************************/
 
 /**
  * Login a User
@@ -232,12 +237,13 @@ function LoginForm(props: BoxProps) {
   // Call the "submit" API
   const submit = useCallback(async () => {
     setState({ isLoading: true });
-    const success = await axios.post({
+    const resp = await axios.post({
       username: state.username,
       password: state.password,
     });
+    const isSuccess = _someLongComplexFn(resp);
     setState({ isLoading: false });
-    if (success) {
+    if (isSuccess) {
       navigate('/account');
     }
   }, [setState, state.username, state.password, navigate]);
@@ -284,6 +290,20 @@ function LoginForm(props: BoxProps) {
     </Box>
   );
 }
+
+/******************************************************************************
+                               Functions
+******************************************************************************/
+
+function _someLongComplexFn(data: AxiosResponse<unknown>): boolean {
+   ...do stuff
+}
+
+/******************************************************************************
+                               Export default
+******************************************************************************/
+
+export default LoginForm;
 ```
 <br/>
 
