@@ -32,14 +32,7 @@ Documentation for best practices to use with React with Typescript. Note that th
 -   src/
 -     assets/
 -     common/
--       constants/
--       types/
--       util/
--         hooks/
 -     components/
--       lg/
--       md/
--       sm/
 -     header-and-footer/
 -     models/
 -     pages/
@@ -67,11 +60,11 @@ Documentation for best practices to use with React with Typescript. Note that th
 -     `constants/` shared miscellaneous constant variables (i.e. `Paths.ts` which holds all the route string values of your APIs).
 -     `types/` shared miscellaneous types (i.e. `types/index.ts` which has the custom utility type `TMakeOptional` for make certain properties on an object optional).
 -     `util/` miscellanous shared logic. Could be modules or inventory scripts.
--   `components/` custom react components (might not be shared like a navigation bar or shared such as a styled button you used in multiple places)
+-   `components/` shared JSX components (i.e. a styled button you use in multiple places)
       - `/lg` single components that take up multiple files
       - `/md` single components that take up one file
       - `/sm` multiple components per file
--   `header-and-footer` the header and footer components for your site
+-   `header-and-footer` the header and footer components for your site, we don't put them in `components/` cause they're not shared, we just use them once in `App.tsx`.
 -   `/models` modules which represent data-tables (i.e. User.ts represents the users table in the database)
 -   `/pages` the various pages of your application.
   -   <b>NOTE:</b> You should try to structure your `pages/` folders as close as possible in the same way as they are navigated to by the user. So if your site is like `https://my-site.com/home`, `https://my-site.com/account`, `https://my-site.com/posts/edit`, and `https://my-site.com/posts/new` the `pages/` folder should look like how it does in <b>Snippet 1</b>. Of course this is not always possible and it's normal to not follow this to-a-tee. For example, you might have the `id` of a `Post` record inserted somewhere in your url, so it can be automatically selected when the user refreshes the browser and 'View' might be the default view for a particular post that's selected (i.e. `https://my-site.com/posts/9Z8AO5C844R` displays the <View/> component).
@@ -79,7 +72,7 @@ Documentation for best practices to use with React with Typescript. Note that th
 
 ### Structuring your app <a name="structuring-your-app"></a>
 - In addition to what's listed above, you should name your files/folders after the React component they mean to represent. If a file represents a single-component, and there are not multiple files for that component (that includes test files and child components), name that file after the component. However, for large components that include multiple files, name the folder after the component, and name the core file `index.ts`, which is the JavaScript convention for naming the file in a folder where everything else is exported from (see <b>Snippet 1</b>).
-- Please see <a href="https://github.com/seanpmaxwell/Typescript-Best-Practices">Typescript best practices</a> for the reasoning behind creating the `common/` folder and its three subfolders. For React applications, because we may have shared JSX components across multiple parent components, we create an additional `components/` folder along side common. However, do not place `components/` (or any other shared folders) inside `common/`, we do not want `common/` to be a dumping ground.
+- Please see <a href="https://github.com/seanpmaxwell/Typescript-Best-Practices">Typescript best practices</a> for the reasoning behind creating the `common/` folder and its three subfolders. For React applications, because we may have shared JSX components across multiple parent components, we create an additional `components/` folder along side `common/`. However, DO NOT place `components/` (or any other shared folders) inside `common/`, we do not want `common/` to be a dumping ground.
 
 ### Snippet 1
 ```
@@ -87,6 +80,8 @@ Documentation for best practices to use with React with Typescript. Note that th
 - common/
 -   constants/
 -     Paths.ts
+-   types/
+-   util/
 - models/
 -   User.ts
 -   Post.ts
