@@ -33,7 +33,6 @@ Documentation for best practices to use with React with Typescript. Note that th
 -     assets/
 -     common/
 -     components/
--     header-and-footer/
 -     models/
 -     pages/
 -     styles/
@@ -64,7 +63,6 @@ Documentation for best practices to use with React with Typescript. Note that th
       - `/lg` single components that take up multiple files
       - `/md` single components that take up one file
       - `/sm` multiple components per file
--   `header-and-footer` the header and footer components for your site, we don't put them in `components/` cause they're not shared, we just use them once in `App.tsx`.
 -   `/models` modules which represent data-tables (i.e. User.ts represents the users table in the database)
 -   `/pages` the various pages of your application.
   -   <b>NOTE:</b> You should try to structure your `pages/` folders as close as possible in the same way as they are navigated to by the user. So if your site is like `https://my-site.com/home`, `https://my-site.com/account`, `https://my-site.com/posts/edit`, and `https://my-site.com/posts/new` the `pages/` folder should look like how it does in <b>Snippet 1</b>. Of course this is not always possible and it's normal to not follow this to-a-tee. For example, you might have the `id` of a `Post` record inserted somewhere in your url, so it can be automatically selected when the user refreshes the browser and 'View' might be the default view for a particular post that's selected (i.e. `https://my-site.com/posts/9Z8AO5C844R` displays the <View/> component).
@@ -113,7 +111,10 @@ Documentation for best practices to use with React with Typescript. Note that th
 -     index.tsx // Displays the <PostsTable/> component if no singular post is selected.
 -     index.ctx.tsx
 -     index.test.tsx
--     PostsTable.tsx 
+-     PostsTable.tsx
+- styles/
+-  Colors.ts
+-  BoxStyles.ts
 ```
 
 
