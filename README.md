@@ -58,7 +58,7 @@ Documentation for best practices to use with React with Typescript. Note that th
 -   `common/`
 -     `constants/` shared miscellaneous constant variables (i.e. `Paths.ts` which holds all the route string values of your APIs).
 -     `types/` shared miscellaneous types (i.e. `types/index.ts` which has the custom utility type `TMakeOptional` for make certain properties on an object optional).
--     `util/` miscellanous shared logic. Could be modules or inventory scripts.
+-     `utils/` miscellanous shared logic. Could be modules or inventory scripts.
 -   `components/` shared JSX components (i.e. a styled button you use in multiple places)
       - `/lg` single components that take up multiple files
       - `/md` single components that take up one file
@@ -79,7 +79,7 @@ Documentation for best practices to use with React with Typescript. Note that th
 -   constants/
 -     Paths.ts
 -   types/
--   util/
+-   utils/
 - models/
 -   User.ts
 -   Post.ts
