@@ -15,7 +15,7 @@ Documentation for best practices to use with React with Typescript. Note that th
   - [Component Properties](#component-properties)
 - [Handling State Management](#handling-state-management)
   - [useState() and useSetState()](#use-setstate)
-  - [useContext()](#use-context)
+  - [useContext and "third party global state managers"](#use-context)
 - [Misc Code Styling Rules](#misc-code-styling-rules)
   - [Conditional Elements](#conditional-elements)
   - [Styling the UI](#styling-the-ui)
