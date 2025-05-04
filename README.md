@@ -324,9 +324,8 @@ export default LoginForm;
 - For those using `useContext`, if your component contains both a large amount of dom content and a large amount of `<Provider/>` properties as well, it might be worth it break your context and your jsx code into different files. You should append these files with `"file Name".provider.tsx`. For example, suppose your App.tsx file contains a lof of jsx code and a lot of logic for fetching/managing the user sessions, you could create a seperate App.provider.tsx file which uses `createContext()` whose default export is the context's provider (see <b>Snippet 4</b>).
 
 ### Snippet 4
+- App.provider.tsx
 ```.tsx
-// App.ctx.tsx
-
 import { createContext } from 'react';
 
 const AppCtx = createContext({});
@@ -352,10 +351,10 @@ function AppProvider(props) {
 
 export const useAppContext = useContext(AppCtx);
 export default AppProvider;
+```
 
-
-// App.tsx
-
+- App.tsx
+```.tsx
 import AppProvider, { useAppContext } from 'App.ctx';
 
 function App() {
