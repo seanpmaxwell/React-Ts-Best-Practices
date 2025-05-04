@@ -373,22 +373,9 @@ function App() {
 }
 
 export default App;
-
-
-// Navbar.tsx
-
-import { AppCtx } from '../App.ctx';
-
-function Navbar() {
-  const { session } = useContext(AppCtx);
-  return (
-    <div>Hello {session.name}</div>
-  );
-}
-
-export default Navbar;
-
 ```
+
+- Keep in mind that `useContext` does trigger a rerender of the component using it and all child components. So make sure you create multiple `useContext` providers and only use each at the highest level it needs to be.
 <br/>
 
 
