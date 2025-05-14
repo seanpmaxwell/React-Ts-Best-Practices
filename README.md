@@ -60,11 +60,12 @@ Documentation for best practices to use with React with Typescript. Note that th
 -     `types/` shared miscellaneous types (i.e. `types/index.ts` which has the custom utility type `TMakeOptional` for make certain properties on an object optional).
 -     `utils/` miscellanous shared logic. Could be modules or inventory scripts.
 -   `components/` shared JSX components (i.e. a styled button you use in multiple places)
-      - `/lg` single components that take up multiple files
-      - `/md` single components that take up one file
-      - `/sm` multiple components per file
--   `/models` modules which represent data-tables (i.e. `User.ts` represents the users table in the database)
--   `/pages` the various pages of your application.
+-     `lg/` single components that take up multiple files
+-     `md/` single components that take up one file
+-     `sm/` multiple components per file
+-   `hooks/` any custom hooks you create 
+-   `models/` modules which represent data-tables (i.e. `User.ts` represents the users table in the database)
+-   `pages/` the various pages of your application.
   -   <b>NOTE:</b> You should try to structure your `pages/` folders as close as possible in the same way as they are navigated to by the user. So if your site is like `https://my-site.com/home`, `https://my-site.com/account`, `https://my-site.com/posts/edit`, and `https://my-site.com/posts/new` the `pages/` folder should look like how it does in <b>Snippet 1</b>. Of course this is not always possible and it's normal to not follow this to-a-tee. For example, you might have the `id` of a `Post` record inserted somewhere in your url, so it can be automatically selected when the user refreshes the browser and 'View' might be the default view for a particular post that's selected (i.e. `https://my-site.com/posts/9Z8AO5C844R` displays the <View/> component).
 -   `styles/` various shared styles (i.e. Colors.ts)
 
@@ -80,6 +81,7 @@ Documentation for best practices to use with React with Typescript. Note that th
 -     Paths.ts
 -   types/
 -   utils/
+- hooks/
 - models/
 -   User.ts
 -   Post.ts
@@ -132,7 +134,7 @@ Documentation for best practices to use with React with Typescript. Note that th
 - If a function inside a functional-component is large and its logic does not need to change with the component, move it outside the component and put it in the `Functions` region at the bottom of the file: this is will stop the logic from needing to be reinitialized each time.
 - When positioning sibling-components in relation to each other, do the positioning in the parent-component, that way all the positioning between siblings can be seen at once and we don't have to dig into the code of each individual child component to move them (see <b>Snippet 2</b>).
 - Although comments (not spaces) should generally be used to separate chunks of logic within traditional functions (as mentioned in <a href="https://github.com/seanpmaxwell/Typescript-Best-Practices">Typescript best practices</a>), for jsx component-functions, we can use spacing to separate chunks of logic. Use single-spaces + comments to separate hook calls, related DOM elements within the `return` statement, and initializing related variables (see <b>Snippet 3</b>).
-- Create your hooks in the order than they are used: i.e. import direct properties at the top, then any properties from `useContext` then initialize your state, the place any onLoad API calls, hooks that listen for changes from DOM interaction should go in the order than the DOM elements are arranged, then any submission API calls at the very end. Like anything else it might make sense to use exceptions but this is generally how it should be organized.
+- Call your hooks in the order than they are used: i.e. import direct properties at the top, then any properties from `useContext` then initialize your state, the place any onLoad API calls, hooks that listen for changes from DOM interaction should go in the order than the DOM elements are arranged, then any submission API calls at the very end. Like anything else it might make sense to use exceptions but this is generally how it should be organized.
 
 ### Component properties <a name="component-properties"></a>
 - Extract the component properties at the top of the function-component from the `props` param, don't use `props` in a bunch of places to access values. This makes it easier to intialize default values when a property is undefined and makes the code more robust because you can see if a property is no longer being used but might still be getting passed down by parent-component. Another aspect to this is that when creating a functional-component that wraps around another functional-component, it's generally a good idea to mimick the child properties as much as you can so that way you don't have to recreate/redeclare these properties again (see <b>Snippet 2</b> and <b>Snippet 3</b>).
