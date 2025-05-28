@@ -72,6 +72,7 @@ Documentation for best practices to use with React with Typescript. Note that th
 ### Structuring your app <a name="structuring-your-app"></a>
 - In addition to what's listed above, you should name your files/folders after the React component they mean to represent. If a file represents a single-component, and there are not multiple files for that component (that includes test files and child components), name that file after the component. However, for large components that include multiple files, name the folder after the component, and name the core file `index.ts`, which is the JavaScript convention for naming the file in a folder where everything else is exported from (see <b>Snippet 1</b>).
 - Please see <a href="https://github.com/seanpmaxwell/Typescript-Best-Practices">Typescript best practices</a> for the reasoning behind creating the `common/` folder and its three subfolders. For React applications, because we may have shared JSX components across multiple parent components, we create an additional `components/` folder along side `common/`. However, DO NOT place `components/` (or any other shared folders) inside `common/`, we do not want `common/` to be a dumping ground.
+- For folders which represent a single component, all files directly in that folder should represent child-components of the default component in `index.tsx` file. Place non-jsx content it's appropriate `common/`, `support/` folder etc (see <a href="https://github.com/seanpmaxwell/Typescript-Best-Practices">Typescript best practices</a>) and create new folders for child components which have their own children. 
 
 ### Snippet 1
 ```
@@ -91,6 +92,7 @@ Documentation for best practices to use with React with Typescript. Note that th
 -     index.test.tsx
 -   Account/ (https://my-site.com/account)
 -     UpdatePaymentForm/
+-       ValidatePaymentInfo.tsx
 -       index.tsx
 -       index.test.tsx
 -     index.tsx // <- Imports the <UpdatePaymentForm/> component
