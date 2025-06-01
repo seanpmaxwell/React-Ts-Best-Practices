@@ -137,38 +137,69 @@ Documentation for best practices to use with React with Typescript. Note that th
 - When positioning sibling-components in relation to each other, do the positioning in the parent-component, that way all the positioning between siblings can be seen at once and we don't have to dig into the code of each individual child component to move them (see <b>Snippet 2</b>).
 - Although comments (not spaces) should generally be used to separate chunks of logic within traditional functions (as mentioned in <a href="https://github.com/seanpmaxwell/Typescript-Best-Practices">Typescript best practices</a>), for jsx component-functions, we can use spacing to separate chunks of logic. Use single-spaces + comments to separate hook calls, related DOM elements within the `return` statement, and initializing related variables (see <b>Snippet 3</b>).
 - Call your hooks in the order than they are used: i.e. import direct properties at the top, then any properties from `useContext` then initialize your state, the place any onLoad API calls, hooks that listen for changes from DOM interaction should go in the order than the DOM elements are arranged, then any submission API calls at the very end. Like anything else it might make sense to use exceptions but this is generally how it should be organized.
-
-### Component properties <a name="component-properties"></a>
-- Extract the component properties at the top of the function-component from the `props` param, don't use `props` in a bunch of places to access values. This makes it easier to intialize default values when a property is undefined and makes the code more robust because you can see if a property is no longer being used but might still be getting passed down by parent-component. Another aspect to this is that when creating a functional-component that wraps around another functional-component, it's generally a good idea to mimick the child properties as much as you can so that way you don't have to recreate/redeclare these properties again (see <b>Snippet 2</b> and <b>Snippet 3</b>).
+- Inside of a functional-component, don't clog the region above the `return` statement with a bunch of child JSX.Elements assigned to variables. Also don't create excessively large `return` statement for DOM elements. Create new child JSX.Elements and group together chunks of related DOM code. This will make your code more readable and easier to move around if you need rearrange some DOM elements (see <b>Snippet 2</b>)..
 
 ### Snippet 2 
+
+- BAD
+```.tsx
+function Parent() {
+  const posts = [];
+  const name = '';
+
+  let Child = null;
+  if (something) {
+    child = (
+      <Box mb={2}>
+        Name: {name ?? ''} Posts: {posts?.length ?? 0}
+      </Box>
+    );
+  } else {
+    Child = (
+      <Box {...otherProps}>
+        Foo: {name} Bar: {posts.length}
+      </Box>
+    );
+  }
+
+  return (
+    <Box>
+      <Child/>
+      <SomeOtherChild/>
+    </Box>
+  );
+}
+```
+
+- GOOD
 ```.tsx
 import Box, { BoxProps } from '@mui/material/Box';
+
+interface IChildProps extends BoxProps {
+  name?: string;
+  posts?: string[];
+}
 
 function Parent() {
   return (
     <Box>
-      <Child1 mb={1}/>
-      <Child2/>
+      {something ? (
+        <Child1 mb={1} name={name} posts={post}/>
+      ) : (
+        <Child2 name={name} posts={post}/>
+      )}
       <SomeOtherChild/>
     </Box>
   );
 }
 
-
-// GOOD
-
-interface IProps1 extends BoxProps {
-  name?: string;
-  posts?: string[];
-}
-
-function Child1(props: IProps1) {
+function Child1(props: IChildProps) {
   const {
     name = '',
     posts = [],
     ...otherProps
   } = props;
+
   return (
     <Box {...otherProps}>
       Name: {name} Posts: {posts.length}
@@ -176,25 +207,23 @@ function Child1(props: IProps1) {
   );
 }
 
+function Child2(props: IChildProps) {
+  const {
+    name = '',
+    posts = [],
+    ...otherProps
+  } = props;
 
-// BAD
-
-interface IProps2 {
-  name?: string;
-  posts?: string[];
-}
-
-function Child2(props: IProps2) {
   return (
-    <Box mb={2}>
-      Name: {props.name ?? ''} Posts: {props.posts?.length ?? 0}
+    <Box {...otherProps}>
+      Foo: {name} Bar: {posts.length}
     </Box>
   );
 }
 ```
 
 - In complying with TypeScript best practices, use function-declarations for functions at the top scope of a file and arrow-functions if a function is declared inside of another function:
-```typescript
+```.tsx
 function Parent() {
   return (
     <Child
@@ -205,6 +234,9 @@ function Parent() {
 }
 ```
 
+### Component properties <a name="component-properties"></a>
+- Extract the component properties at the top of the function-component from the `props` param, don't use `props` in a bunch of places to access values. This makes it easier to intialize default values when a property is undefined and makes the code more robust because you can see if a property is no longer being used but might still be getting passed down by parent-component. Another aspect to this is that when creating a functional-component that wraps around another functional-component, it's generally a good idea to mimick the child properties as much as you can so that way you don't have to recreate/redeclare these properties again (see <b>Snippet 3</b>).
+  
 ### Snippet 3
 
 ```.tsx
