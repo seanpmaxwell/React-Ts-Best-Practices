@@ -19,6 +19,7 @@ Documentation for best practices to use with React with Typescript. Note that th
 - [Misc Code Styling Rules](#misc-code-styling-rules)
   - [Conditional Elements](#conditional-elements)
   - [Styling the UI](#styling-the-ui)
+  - [Parameter Names for JSX Elements](#parameter-names-for-JSX-elements)
   - [Other](#other)
 <br/>
 
@@ -517,6 +518,58 @@ function Foo() {
 }
 ```
 
+### Parameter names for JSX callback functions <a name="parameter-names-for-JSX-elements"></a>
+- In all of progamming, function parameters should have useful names that describe their purpose, but in React, because its so common to see lots of arrow functions declared directly in JSX element properties, you can just use the name `v` for these simple callbacks if they only return provide one or two values. This will also help to distinguish the callback parameter from the other variables in the JSX element:
+```tsx
+function Parent() {
+
+  // State
+  const [ state, setState ] = useSetState({
+    name: '',
+    nameError: false,
+    email: '',
+    emailError: false,
+  });
+
+  return (
+    <div>
+      <CustomInput
+        value={state.name}
+        isRequired={true}
+        onChange={(v, err) => setState({ name: v, nameError: err }) }
+      />
+      <CustomInput
+        value={state.email}
+        isRequired={true}
+        onChange={(v, err) => setState({ email: v, emailError: err }) }
+      />
+     <button disabled={state.nameError || state.emailError} onClick={'someAPI call'}>
+       Submit
+     </button>
+    </div>
+  );
+}
+
+/**
+ * Custom Input that shows an error below the <input/> if value is required but not there.
+ */
+function CustomInput(props: { value: string, isRequired: boolean, onChange: (value: string, error?: boolean) => void }) {
+  const { value, isRequired, onChange } = props;
+  return (
+    <div>
+      <input
+        type="text"
+        value={value}
+        onChange={v => onChange(v.trim(), isRequired && !val)}  
+      />
+      <div>
+        {(!value && isRequired) ? 'Value is required' : ''}
+      </div>
+    </div>
+  );
+}
+```
+
 ### Other <a name="other"></a>
 - If an element only has one prop being passed, you can put it on the same row as the element name, put it to the next row if there's more than one (see <b>Snippet 5</b>).
-- Use single quotes `'` for plain JS/TS code, but use double-quotes `"` for properties on jsx elements. You can set this in the linter but I'm mentioning it cause I've seen so many projects without it.
+- Use single quotes `''` for plain JS/TS code, but use double-quotes `""` for properties on jsx elements. You can set this in the linter but I'm mentioning it cause I've seen so many projects without it.
