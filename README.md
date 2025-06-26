@@ -560,7 +560,7 @@ function CustomInput(props: { value: string, isRequired: boolean, onChange: (val
       <input
         type="text"
         value={value}
-        onChange={v => onChange(v.trim(), isRequired && !val)}  
+        onChange={v => onChange(v.trim(), isRequired && !v)}  
       />
       <div>
         {(!value && isRequired) ? 'Value is required' : ''}
