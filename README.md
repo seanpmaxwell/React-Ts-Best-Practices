@@ -138,13 +138,15 @@ Documentation for best practices to use with React with Typescript. Note that th
 - When positioning sibling-components in relation to each other, do the positioning in the parent-component, that way all the positioning between siblings can be seen at once and we don't have to dig into the code of each individual child component to move them (see <b>Snippet 2</b>).
 - Although comments (not spaces) should generally be used to separate chunks of logic within traditional functions (as mentioned in <a href="https://github.com/seanpmaxwell/Typescript-Best-Practices">Typescript best practices</a>), for jsx component-functions, we can use spacing to separate chunks of logic. Use single-spaces + comments to separate hook calls, related DOM elements within the `return` statement, and initializing related variables (see <b>Snippet 3</b>).
 - Call your hooks in the order than they are used: i.e. import direct properties at the top, then any properties from `useContext` then initialize your state, the place any onLoad API calls, hooks that listen for changes from DOM interaction should go in the order than the DOM elements are arranged, then any submission API calls at the very end. Like anything else it might make sense to use exceptions but this is generally how it should be organized.
+- Following Typescript best practices, `export default` should be at the bottom of a file. If a file's default export is a JSX component (to let users know which component is the default without scrolling to the bottom) make sure the write `Default Component: ...` at the start of the comment for that function.
 - Inside of a functional-component, don't clog the region above the `return` statement with a bunch of child JSX.Elements assigned to variables. Also don't create excessively large `return` statement for DOM elements. Create new child JSX.Elements and group together chunks of related DOM code. This will make your code more readable and easier to move around if you need rearrange some DOM elements (see <b>Snippet 2</b>, pretend that the `<Child/>` elements are much larger than they actually are in the snippet).
 
 ### Snippet 2 
 
 - BAD
 ```.tsx
-function Parent() {
+// display a list of children
+export default function Parent() {
   const posts = [];
   const name = '';
 
@@ -181,6 +183,9 @@ interface IChildProps extends BoxProps {
   posts?: string[];
 }
 
+/**
+ * Default Component: display a list of <Child/> elements.
+ */
 function Parent() {
   return (
     <Box>
@@ -194,6 +199,9 @@ function Parent() {
   );
 }
 
+/**
+ * Display a child's name and number of posts.
+ */
 function Child1(props: IChildProps) {
   const {
     name = '',
@@ -208,6 +216,9 @@ function Child1(props: IChildProps) {
   );
 }
 
+/**
+ * Lorum Ipsum.
+ */
 function Child2(props: IChildProps) {
   const {
     name = '',
@@ -221,6 +232,8 @@ function Child2(props: IChildProps) {
     </Box>
   );
 }
+
+export default Parent;
 ```
 
 - In complying with TypeScript best practices, use function-declarations for functions at the top scope of a file and arrow-functions if a function is declared inside of another function:
