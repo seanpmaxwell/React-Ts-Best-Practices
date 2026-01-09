@@ -21,7 +21,7 @@ This guide focuses on React-specific habits that pair well with TypeScript. It a
   - [Callback parameter names](#misc-styling-callbacks)
   - [Other rules](#misc-styling-other)
 
----
+<br/><b>***</b><br/>
 
 ## Project structure <a name="project-structure"></a>
 
@@ -122,7 +122,7 @@ This guide focuses on React-specific habits that pair well with TypeScript. It a
     - UserService/
 ```
 
----
+<br/><b>***</b><br/>
 
 ## Functional components <a name="functional-components"></a>
 
@@ -320,7 +320,7 @@ function _someLongComplexFn(data: AxiosResponse<unknown>): boolean {
 export default LoginForm;
 ```
 
----
+<br/><b>***</b><br/>
 
 ## State management <a name="state-management"></a>
 
@@ -383,7 +383,7 @@ function App(props) {
 export default App;
 ```
 
----
+<br/><b>***</b><br/>
 
 ## Misc styling rules <a name="misc-styling-rules"></a>
 
