@@ -29,7 +29,6 @@ This guide focuses on React-specific habits that pair well with TypeScript. It a
 - app
   - public/
   - src/
-    - API/
     - assets/
     - common/
       - constants/
@@ -47,6 +46,7 @@ This guide focuses on React-specific habits that pair well with TypeScript. It a
       - App.tsx
       - index.css
       - index.tsx
+    - domain/
     - models/
   - .env
   - .eslintrc.json
@@ -58,22 +58,17 @@ This guide focuses on React-specific habits that pair well with TypeScript. It a
 
 ### Structuring components <a name="project-structure-structuring"></a>
 - Name files and folders after the React component they represent. File names of single-file components should share the component name. Multi-file components should have a folder named after the component with an `index.tsx` (barrel) default entry.
+- In the `server/` the _Services_ layer usually refers to business logic while in client Services usually refers to integration-logic (handling API calls).
+- There's no universal convention for what to call the business-layer client side but I like the word **domain** cause it refers to domain specific logic.
 
 ### Example layout <a name="project-structure-example"></a>
 ```yml
-- API/ <-- Keep APIs in one place
-  - Paths.ts
-  - index.ts <-- functions to call APIs
+- assets/
 - common/
   - constants/
     - EnvVars.ts
   - types/
   - utils/
-- models/ <-- Describing/validating database records
-  - User
-    - index.ts
-    - types.ts
-  - Post.ts
 - components/
   - common/
     - components/
@@ -113,7 +108,17 @@ This guide focuses on React-specific habits that pair well with TypeScript. It a
         - index.tsx  // displays a specific post
       - index.tsx  // shows <PostsTable/> when no post is selected
       - index.css
-- services/ <--Business Logic
+- domain/ <-- Business logic
+  - PostDomain.ts
+  - UserDomain.ts
+- models/ <-- Describing/validating database records
+  - User
+    - index.ts
+  - Post.ts
+- services/ <-- API calls
+  - common/
+    - API/
+    - Paths.ts <-- Keep all paths in one place
   - UserService/
   - PostService
 ```
