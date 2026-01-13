@@ -26,34 +26,33 @@ This guide focuses on React-specific habits that pair well with TypeScript. It a
 
 ### Overview <a name="project-structure-overview"></a>
 ```yml
-- app
-  - public/
-  - src/
-    - assets/
+- public/
+- src/
+  - assets/
+  - common/
+    - constants/
+    - types/
+    - utils/
+  - components/
     - common/
-      - constants/
-      - types/
-      - utils/
-    - components/
-      - common/
-        - components/
-        - hooks/
-        - styles/
-      - pages/
-      - services/
-      - App.ctx.tsx
-      - App.test.tsx
-      - App.tsx
-      - index.css
-      - index.tsx
-    - domain/
-    - models/
-  - .env
-  - .eslintrc.json
-  - .gitignore
-  - README.md
-  - package.json
-  - tsconfig.json
+      - components/
+      - hooks/
+      - styles/
+    - pages/
+    - services/
+    - App.ctx.tsx
+    - App.test.tsx
+    - App.tsx
+    - index.css
+    - index.tsx
+  - domain/
+  - models/
+- .env
+- .eslintrc.json
+- .gitignore
+- README.md
+- package.json
+- tsconfig.json
 ```
 
 ### Structuring components <a name="project-structure-structuring"></a>
@@ -61,7 +60,7 @@ This guide focuses on React-specific habits that pair well with TypeScript. It a
 - In the `server/` the _Services_ layer usually refers to business logic while in client Services usually refers to integration-logic (handling API calls).
 - There's no universal convention for what to call the business-layer client side but I like the word **domain** cause it refers to domain specific logic.
 
-### Example layout <a name="project-structure-example"></a>
+### Example `src/` folder layout <a name="project-structure-example"></a>
 ```yml
 - assets/
 - common/
@@ -70,7 +69,7 @@ This guide focuses on React-specific habits that pair well with TypeScript. It a
   - types/
   - utils/
 - components/
-  - common/
+  - _ui-common/
     - components/
       - lg/
       - md/
