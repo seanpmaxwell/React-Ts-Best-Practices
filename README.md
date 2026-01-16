@@ -103,11 +103,11 @@ This guide focuses on React-specific habits that pair well with TypeScript. It a
       - Paths.ts <-- Keep all paths in one place
       - API.ts <-- used by the services layer
   - users/
-    - UserRules.ts <-- business logic
+    - UserOps.ts <-- business logic / counter-part to our services-layer in the back-end
     - UserService.ts
     - User.ts // model-layer
   - posts/
-    - PostRules.ts
+    - PostOps.ts
     - PostService.ts
     - Post.ts
 ```
