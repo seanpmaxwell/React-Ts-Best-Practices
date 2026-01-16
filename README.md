@@ -46,7 +46,7 @@ This guide focuses on React-specific habits that pair well with TypeScript. It a
 ### Structuring components <a name="project-structure-structuring"></a>
 - Name files and folders after the React component they represent. File names of single-file components should share the component name.
 - For scalable React apps, I like to use **domain-based** architecture, see the [architecture section](https://github.com/seanpmaxwell/Typescript-Best-Practices/blob/main/README.md#architecture) of the TypeScript-Best-Practices readme for more details about architecture choices.
-- In the `server/`, the _Services_ layer usually refers to business logic while in the client, _services_ usually refers to integration-logic (handling API calls). So on the client-side, I've decided to place the business-logic in namespace-object scripts using the name `"Domain Name"+Rules.ts` (i.e. `UserRules.ts`). 
+- In the `server/`, the _Services_ layer usually refers to business logic while in the client, _services_ usually refers to integration-logic (handling API calls). So on the client-side, I've decided to place the business-logic in namespace-object scripts using the name `"Domain Name"+Ops.ts` (i.e. `UserOps.ts`). 
 
 ### Example `src/` folder layout with domain-based architecture <a name="project-structure-example"></a>
 ```yml
