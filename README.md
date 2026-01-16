@@ -30,37 +30,25 @@ This guide focuses on React-specific habits that pair well with TypeScript. It a
 - src/
   - assets/
   - common/
-    - constants/
-    - types/
-    - utils/
   - components/
     - common/
-      - components/
-      - hooks/
-      - styles/
     - pages/
-    - services/
-    - App.ctx.tsx
     - App.test.tsx
     - App.tsx
     - index.css
     - index.tsx
-  - domain/
-  - models/
+  - domains/
 - .env
-- .eslintrc.json
-- .gitignore
-- README.md
 - package.json
 - tsconfig.json
 ```
 
 ### Structuring components <a name="project-structure-structuring"></a>
-- Name files and folders after the React component they represent. File names of single-file components should share the component name. Multi-file components should have a folder named after the component with an `index.tsx` (barrel) default entry.
-- In the `server/` the _Services_ layer usually refers to business logic while in client Services usually refers to integration-logic (handling API calls).
-- There's no universal convention for what to call the business-layer client side but I like the word **domain** cause it refers to domain specific logic.
+- Name files and folders after the React component they represent. File names of single-file components should share the component name.
+- For scalable React apps, I like to use **domain-based** architecture, see the [architecture section](https://github.com/seanpmaxwell/Typescript-Best-Practices/blob/main/README.md#architecture) of the TypeScript-Best-Practices readme for more details about architecture choices.
+- In the `server/`, the _Services_ layer usually refers to business logic while in the client, _services_ usually refers to integration-logic (handling API calls). So on the client-side, I've decided to place the business-logic in namespace-object scripts using the name `"Domain Name"+Rules.ts` (i.e. `UserRules.ts`). 
 
-### Example `src/` folder layout <a name="project-structure-example"></a>
+### Example `src/` folder layout with domain-based architecture <a name="project-structure-example"></a>
 ```yml
 - assets/
 - common/
@@ -69,8 +57,8 @@ This guide focuses on React-specific habits that pair well with TypeScript. It a
   - types/
   - utils/
 - components/
-  - _ui-common/
-    - components/
+  - common/
+    - ui/
       - lg/
       - md/
       - sm/
@@ -82,44 +70,46 @@ This guide focuses on React-specific habits that pair well with TypeScript. It a
       - BoxStyles.ts
   - pages/
     - Home/ (https://my-site.com/home)
-      - index.tsx
-      - index.test.tsx
+      - Home.tsx
+      - Home.test.tsx
     - Account/ (https://my-site.com/account)
       - UpdatePaymentForm/
         - ValidatePaymentInfo.tsx
-        - index.tsx
-        - index.test.tsx
-      - index.tsx  // imports <UpdatePaymentForm/>
-      - index.test.tsx
+        - UpdatePaymentForm.tsx
+        - UpdatePaymentForm.test.tsx
+      - Account.tsx  // imports <UpdatePaymentForm/>
+      - Account.test.tsx
     - Posts/ (https://my-site.com/posts)
       - common/
         - types.ts // shared across View/Edit/New
         - components/
           - PostForm.tsx  // shared between New and Edit
       - Edit/ (https://my-site.com/posts/:id/edit)
-        - index.test.tsx
-        - index.tsx
+        - Edit.test.tsx
+        - Edit.tsx
       - New/ (https://my-site.com/posts/new)
-        - index.test.tsx
-        - index.tsx
+        - New.test.tsx
+        - New.tsx
       - View/ (https://my-site.com/posts/:id)
-        - index.test.tsx
-        - index.tsx  // displays a specific post
-      - index.tsx  // shows <PostsTable/> when no post is selected
-      - index.css
-- domain/ <-- Business logic
-  - PostDomain.ts
-  - UserDomain.ts
-- models/ <-- Describing/validating database records
-  - User
-    - index.ts
-  - Post.ts
-- services/ <-- API calls
+        - View.test.tsx
+        - View.tsx  // displays a specific post
+      - Posts.tsx  // shows <PostsTable/> when no post is selected
+      - Posts.css
+- domains/
   - common/
-    - API/
-    - Paths.ts <-- Keep all paths in one place
-  - UserService/
-  - PostService
+    - models/
+      - Model.ts <-- Parent model interface
+    - http/
+      - Paths.ts <-- Keep all paths in one place
+      - API.ts <-- used by the services layer
+  - users/
+    - UserRules.ts <-- business logic
+    - UserService.ts
+    - User.ts // model-layer
+  - posts/
+    - PostRules.ts
+    - PostService.ts
+    - Post.ts
 ```
 
 <br/><b>***</b><br/>
