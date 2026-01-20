@@ -38,6 +38,7 @@ This guide focuses on React-specific habits that pair well with TypeScript. It a
     - index.css
     - index.tsx
   - domains/
+  - infra/
 - .env
 - package.json
 - tsconfig.json
@@ -97,11 +98,10 @@ This guide focuses on React-specific habits that pair well with TypeScript. It a
       - Posts.css
 - domains/
   - common/
-    - models/
-      - Model.ts <-- Parent model interface
-    - http/
+    - constants/
       - Paths.ts <-- Keep all paths in one place
-      - API.ts <-- used by the services layer
+    - types/
+      - Entity.ts <-- Parent model interface
   - users/
     - UserOps.ts <-- business logic / counter-part to our services-layer in the back-end
     - UserService.ts
@@ -110,6 +110,10 @@ This guide focuses on React-specific habits that pair well with TypeScript. It a
     - PostOps.ts
     - PostService.ts
     - Post.ts
+- infra/
+  - http/
+    - setup-axios.ts
+    - index.ts <-- used by the services layer
 ```
 
 <br/><b>***</b><br/>
