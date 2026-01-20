@@ -5,8 +5,8 @@ This guide focuses on React-specific habits that pair well with TypeScript. It a
 
 ## Table of contents
 - [Project structure](#project-structure)
-  - [Overview](#project-structure-overview)
-  - [Structuring components](#project-structure-structuring)
+  - [Overview summary](#project-structure-overview)
+  - [Overview in detail](#project-structure-structuring)
   - [Example layout](#project-structure-example)
 - [Functional components](#functional-components)
   - [Declaring components](#functional-components-declaring)
@@ -24,7 +24,7 @@ This guide focuses on React-specific habits that pair well with TypeScript. It a
 
 ## Project structure <a name="project-structure"></a>
 
-### Overview <a name="project-structure-overview"></a>
+### Overview summary <a name="project-structure-overview"></a>
 ```yml
 - public/
 - src/
@@ -44,10 +44,11 @@ This guide focuses on React-specific habits that pair well with TypeScript. It a
 - tsconfig.json
 ```
 
-### Structuring components <a name="project-structure-structuring"></a>
+### Overview in detail <a name="project-structure-structuring"></a>
 - Name files and folders after the React component they represent. File names of single-file components should share the component name.
 - For scalable React apps, I like to use **domain-based** architecture, see the [architecture section](https://github.com/seanpmaxwell/Typescript-Best-Practices/blob/main/README.md#architecture) of the TypeScript-Best-Practices readme for more details about architecture choices.
-- In the `server/`, the _Services_ layer usually refers to business logic while in the client, _services_ usually refers to integration-logic (handling API calls). So on the client-side, I've decided to place the business-logic in namespace-object scripts using the name `"Domain Name"+Ops.ts` (i.e. `UserOps.ts`). 
+- In the `server/`, the _Services_ layer usually refers to business logic while in the client, _services_ usually refers to integration-logic (handling API calls). So on the client-side, I've decided to place the business-logic in namespace-object scripts using the name `"Domain Name"+Ops.ts` (i.e. `UserOps.ts`).
+- Application logic related to a specific domain (i.e. is user an `Admin` user-type) should go under `src/domains/`. Logic specifically for UI implementation details should go in the component folder where it's used. For example, hooks are React specific functions for handling UI updates, so we put them under `src/components/common`
 
 ### Example `src/` folder layout with domain-based architecture <a name="project-structure-example"></a>
 ```yml
