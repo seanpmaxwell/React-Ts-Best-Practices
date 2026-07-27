@@ -368,7 +368,7 @@ export default UsersList;
 ```
 
 ### `useState` vs `useSetState` <a name="state-management-usestate"></a>
-- `useState` is fine for components with one or two state variables. As state grows, switch to a custom hook (such as [`useSetState`](https://github.com/streamich/react-use/blob/master/docs/useSetState.md)) that manages a single state object.
+- `useState` is fine for components with one or two state variables. As state grows, switch to a custom hook (such as [`useSetState`](https://github.com/streamich/react-use/blob/master/src/useSetState.ts)) that manages a single state object.
 - Grouping state into one object keeps every state value prefixed with `state` and managed by a single updater, improving readability.
 - Hooks such as `resetState` are especially helpful in modal flows or anywhere you need a quick way to restore defaults.
 
