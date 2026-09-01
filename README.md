@@ -29,7 +29,7 @@ This guide focuses on React-specific habits that pair well with TypeScript. It a
 - public/
 - src/
   - assets/
-  - common/
+  - _common/
   - components/
     - common/
     - pages/
@@ -53,13 +53,13 @@ This guide focuses on React-specific habits that pair well with TypeScript. It a
 ### Example `src/` folder layout with domain-based architecture <a name="project-structure-example"></a>
 ```yml
 - assets/
-- common/
+- _common/
   - constants/
     - EnvVars.ts
   - types/
   - utils/
 - components/
-  - common/
+  - _common/
     - ui/
       - lg/
       - md/
@@ -82,7 +82,7 @@ This guide focuses on React-specific habits that pair well with TypeScript. It a
       - Account.tsx  // imports <UpdatePaymentForm/>
       - Account.test.tsx
     - Posts/ (https://my-site.com/posts)
-      - common/
+      - _common/
         - types.ts // shared across View/Edit/New
         - components/
           - PostForm.tsx  // shared between New and Edit
@@ -98,7 +98,7 @@ This guide focuses on React-specific habits that pair well with TypeScript. It a
       - Posts.tsx  // shows <PostsTable/> when no post is selected
       - Posts.css
 - domains/
-  - common/
+  - _common/
     - constants/
       - Paths.ts <-- Keep all paths in one place
     - types/
