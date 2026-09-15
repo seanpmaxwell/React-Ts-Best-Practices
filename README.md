@@ -1,1269 +1,553 @@
-# ⚛️ React + TypeScript Best Practices
-
+## React + TypeScript Best Practices
 [![GitHub stars](https://img.shields.io/github/stars/seanpmaxwell/React-Ts-Best-Practices?style=flat-square)](https://github.com/seanpmaxwell/React-Ts-Best-Practices/stargazers)
 
-Practical patterns for React applications that are easier to read, test, and maintain.
+This guide covers React-specific habits that pair well with TypeScript. It assumes you already follow the [TypeScript best practices](https://github.com/seanpmaxwell/Typescript-Best-Practices) document; anything covered there isn't repeated here.
 
-This guide builds on the [TypeScript best practices](https://github.com/seanpmaxwell/Typescript-Best-Practices) document and covers React-specific decisions only. Some recommendations are React fundamentals; others are house conventions. Use what helps your team, and follow your framework's requirements where they differ.
+Some of these are React fundamentals, others are house conventions. If your framework has its own rules (file-based routing, Server Components, etc.), follow those where they differ.
 
-Examples focus on client-side function components. File-based routing and Server Components may call for a different layout or data-loading approach.
-
-## 📚 Table of contents
-
-- [🗂️ Project structure](#project-structure)
-  - [Overview](#project-structure-overview)
-  - [Where code belongs](#project-structure-where-code-belongs)
+## Table of contents
+- [Project structure](#project-structure)
+  - [Overview summary](#project-structure-overview)
+  - [Overview in detail](#project-structure-structuring)
   - [Example layout](#project-structure-example)
-- [🧩 Function components](#function-components)
+- [Function components](#function-components)
   - [Declaring components](#function-components-declaring)
   - [Organizing component code](#function-components-organization)
   - [Working with props](#function-components-props)
-- [🔄 Containers and state management](#containers-and-state-management)
-  - [The Container/Presenter pattern](#container-presenter-pattern)
-  - [Choosing and updating state](#choosing-and-updating-state)
-- [🎨 Styling and everyday conventions](#styling-and-everyday-conventions)
-  - [Styling the UI](#styling-the-ui)
-  - [Callback parameter names](#callback-parameter-names)
-  - [Other conventions](#other-conventions)
+- [The Container/Presenter pattern and state management](#container-presenter-state-management)
+  - [Container/Presenter pattern](#container-presenter-pattern)
+  - [`useState` vs `useSetState`](#state-management-usestate)
+- [Misc styling rules](#misc-styling-rules)
+  - [Styling the UI](#misc-styling-ui)
+  - [Callback parameter names](#misc-styling-callbacks)
+  - [Other rules](#misc-styling-other)
 
----
+<br/><b>***</b><br/>
 
-<a id="project-structure"></a>
+## Project structure <a name="project-structure"></a>
 
-## 🗂️ Project structure
-
-A good structure answers two questions: where should new code go, and where would someone else expect to find it? Start small; add folders when they clarify responsibilities.
-
-<a id="project-structure-overview"></a>
-
-### Overview
-
-My usual client-side starting layout:
-
-```text
-public/
-src/
-├── assets/
-├── _common/
-├── components/
-│   ├── _common/
-│   ├── pages/
-│   ├── App.test.tsx
-│   ├── App.tsx
-│   └── index.css
-├── domains/
-├── infra/
-└── main.tsx
-.env
-package.json
-tsconfig.json
+### Overview summary <a name="project-structure-overview"></a>
+```yml
+- public/
+- src/
+  - assets/
+  - _common/
+  - components/
+    - _common/
+    - pages/
+    - App.test.tsx
+    - App.tsx
+    - index.css
+  - domains/
+  - infra/
+  - main.tsx
+- .env
+- package.json
+- tsconfig.json
 ```
 
-| Location | Purpose |
-| --- | --- |
-| `public/` | Static files served directly, per your build tool. |
-| `src/assets/` | Assets imported by application code. |
-| `src/_common/` | Shared code not tied to React or one domain. |
-| `src/components/` | Components, pages, and React-specific UI logic. |
-| `src/domains/` | Domain models, business services, and domain API clients. |
-| `src/infra/` | Shared integrations, such as an HTTP client or storage adapter. |
-| `src/main.tsx` | The application entry point. |
+### Overview in detail <a name="project-structure-structuring"></a>
+- Name files and folders after the React component they represent. A single-file component's file name should match the component name. Use `.tsx` only for files that contain JSX; plain helpers go in `.ts`.
+- `main.tsx` is the entry point; `index.ts` is reserved for barrel files, same as the TypeScript guide.
+- For scalable React apps, I like **domain-based** architecture. See the [architecture section](https://github.com/seanpmaxwell/Typescript-Best-Practices/blob/main/README.md#architecture) of the TypeScript guide for the trade-offs.
+- Naming follows the TypeScript guide on both sides of the stack: **Service** means business logic, **Api** means the client-side boundary that talks to the server. So a domain has `User.ts` (model/types), `UserService.ts` (business rules and workflows), and `UserApi.ts` (HTTP requests and responses).
+- Logic tied to a domain (i.e. is this user an `Admin`) goes under `src/domains/`. Client-side checks like that only shape the UI; the server still has to enforce authorization.
+- Logic that only exists to make the UI work belongs with the component that uses it. Hooks are React-specific, so a hook used by one component stays in that component's folder, and only broadly reusable hooks go in `components/_common/hooks/`.
+- Keep dependencies flowing one way: component or hook → service → api → shared HTTP client. Skip a layer when it adds nothing; a page that just loads a list can call `UserApi` directly. Services should never import components or hooks.
+- Anything bundled for the browser is public. Putting a value in `.env` doesn't make it a secret.
 
-`main.tsx` is the entry point; `index.ts` is reserved for barrels. This is a house convention—if your framework defines its own entry points or routing folders, follow those.
-
-Anything in a client bundle is public. `.env` does not make a value secret once the build exposes it to the browser.
-
-<a id="project-structure-where-code-belongs"></a>
-
-### Where code belongs
-
-#### Name components and their files consistently
-
-PascalCase for components; match the filename to the main export:
-
-```text
-Account/
-├── Account.tsx
-└── Account.test.tsx
+### Example `src/` folder layout with domain-based architecture <a name="project-structure-example"></a>
+```yml
+- assets/
+- _common/
+  - constants/
+    - EnvVars.ts
+    - Paths.ts <-- Keep all navigation paths in one place
+  - types/
+  - utils/
+- components/
+  - _common/
+    - ui/  <-- group by purpose, not size labels like sm/md/lg
+      - buttons/
+      - dialogs/
+    - hooks/
+      - usePageTitle.ts
+    - styles/
+      - Colors.ts
+      - BoxStyles.ts
+  - pages/
+    - Home/ (https://my-site.com/home)
+      - Home.tsx
+      - Home.test.tsx
+    - Account/ (https://my-site.com/account)
+      - UpdatePaymentForm/
+        - _local/
+          - usePaymentForm.ts
+        - UpdatePaymentForm.tsx
+        - UpdatePaymentForm.test.tsx
+      - Account.tsx  // imports <UpdatePaymentForm/>
+      - Account.test.tsx
+    - Posts/ (https://my-site.com/posts)
+      - _common/
+        - types.ts // shared across View/Edit/New
+        - components/
+          - PostForm.tsx  // shared between New and Edit
+      - Edit/ (https://my-site.com/posts/:id/edit)
+        - Edit.test.tsx
+        - Edit.tsx
+      - New/ (https://my-site.com/posts/new)
+        - New.test.tsx
+        - New.tsx
+      - View/ (https://my-site.com/posts/:id)
+        - View.test.tsx
+        - View.tsx  // displays a specific post
+      - Posts.tsx  // shows <PostsTable/> when no post is selected
+      - Posts.css
+- domains/
+  - _common/
+    - constants/
+      - ApiPaths.ts <-- API endpoint paths, separate from navigation paths
+    - types/
+      - Entity.ts <-- Parent model interface
+  - users/
+    - User.ts // model-layer
+    - UserService.ts <-- business logic, counterpart to the back-end services layer
+    - UserApi.ts <-- HTTP requests and responses
+  - posts/
+    - Post.ts
+    - PostService.ts
+    - PostApi.ts
+- infra/
+  - http/
+    - setup-axios.ts
+    - index.ts <-- used by the Api layer
+- main.tsx
 ```
 
-A small component can be a single file. Give it a folder when it gains tests, styles, hooks, or supporting components. Use `.tsx` for files with JSX; plain helpers belong in `.ts`.
+Snippets below use `@src/` as an alias for `src/`. Configure it in TypeScript and your build/test tools.
 
-#### Organize larger applications by domain
+<br/><b>***</b><br/>
 
-For apps with several business areas, I prefer domain-based organization. See the [architecture section](https://github.com/seanpmaxwell/Typescript-Best-Practices/blob/main/README.md#architecture) of the TypeScript guide for trade-offs.
+## Function components <a name="function-components"></a>
 
-Within a domain:
+### Declaring components <a name="function-components-declaring"></a>
+- Use PascalCase names and prefer function declarations over classes or arrow functions, mainly for consistency with the TypeScript guide. Parents can precede children with any declaration style (JSX resolves a child when the parent renders, after the module has loaded), and arrow functions assigned to variables get proper names in stack traces, so this is about consistency rather than a technical requirement.
+- Define parent components first and declare children beneath them in the same file to keep logic top-down. Never define a component *inside* another component: that creates a new component type every render, which remounts the subtree and loses its state.
+- Always type props. Define an interface (e.g. `IProps`) in the `Types` region for complex components. Use a more specific name like `ILoginFormProps` when the file has several components or the component is shared.
+- Let TypeScript infer the return type. Components can return `null`, strings, arrays, and other renderable content, so `JSX.Element` isn't accurate. If you want an explicit type, import `ReactNode` or `ReactElement` from React.
 
-| File | Responsibility |
-| --- | --- |
-| `User.ts` | User types and model helpers. |
-| `UserService.ts` | User business rules and workflows. |
-| `UserApi.ts` | User HTTP requests and response handling. |
+### Organizing component code <a name="function-components-organization"></a>
+- Keep static values outside component functions under the `Constants` region. It avoids re-creating them every render, but the bigger win is making it obvious they don't depend on props or state. Never put mutable per-user state at module scope; it's shared by every instance.
+- Extract long helpers that don't depend on props or state and place them in the `Functions` region.
+- Keep rendering pure. Requests, storage writes, and other side effects go in event handlers or effects. If a value can be derived from props or state, derive it during render instead of storing a second copy.
+- Follow the Rules of Hooks: call hooks at the top level, not inside conditions or loops, and keep effect dependencies honest.
+- Place layout logic for sibling components in their parent so positioning and interactions are visible in one place.
+- Prefer whitespace plus short comments to separate hook calls, derived values, handlers, and the returned JSX.
+- Keep the default export at the bottom. When the default export is a function component, start its comment with `Default component ...` so readers can identify it quickly.
+- Avoid giant `return` statements. Create child components for related DOM blocks rather than declaring many JSX variables above the return. Snippet 2 shows how composing smaller components keeps the parent lean.
+- Use function declarations at the top level and arrow functions only for inline callbacks inside JSX.
+- Don't reach for `useCallback`/`useMemo` by default. They matter when function or object identity matters (e.g. props to a memoized child). Write clear code first and measure before adding them.
 
-**Service** means business logic on both frontend and backend; **Api** is the client-side boundary with the server. For example:
-
-- Checking whether a user is eligible for an action → domain logic.
-- Deciding how to display that eligibility → UI.
-- Coordinating an account-update workflow → `UserService`.
-- Sending the account-update request → `UserApi`.
-
-Client-side permission checks shape the UI; the server must still enforce authorization.
-
-#### Keep React-specific logic near its consumers
-
-A hook does not automatically belong in a global hooks folder. Decide by scope:
-
-- Used by one component → stays near that component.
-- Shared by related components → their nearest shared folder.
-- Broadly reusable UI hook → `components/_common/hooks/`.
-
-Prefix custom hooks with `use`, e.g. `usePageTitle` or `usePaymentForm`.
-
-Keep reusable business rules independent of React where practical. A hook can coordinate those rules with component state without moving them into the UI layer.
-
-#### Keep dependencies flowing in one direction
-
-A business workflow typically follows:
-
-```text
-Component or custom hook
-        ↓
-Domain service
-        ↓
-Domain API client
-        ↓
-Shared HTTP client
-```
-
-- **Component or hook:** React state, navigation, UI interactions.
-- **Service:** Business rules and workflow coordination.
-- **API client:** Endpoints, payloads, responses.
-- **HTTP client:** Shared transport configuration.
-
-Not every request needs every layer. A container that just loads users can call `UserApi.fetchAll()` directly; a workflow with validation, transformation, or several requests belongs in `UserService`. Don't add a service that merely forwards a call.
-
-Domain services must not depend on components or hooks. Navigation, dialogs, and other UI behavior stay in the component or hook that owns them.
-
-<a id="project-structure-example"></a>
-
-### Example layout
-
-A more developed `src/`:
-
-```text
-src/
-├── assets/
-├── _common/
-│   ├── constants/
-│   │   ├── EnvVars.ts
-│   │   └── Paths.ts
-│   ├── types/
-│   └── utils/
-├── components/
-│   ├── _common/
-│   │   ├── hooks/
-│   │   │   └── usePageTitle.ts
-│   │   ├── styles/
-│   │   │   ├── Colors.ts
-│   │   │   └── BoxStyles.ts
-│   │   └── ui/
-│   │       ├── buttons/
-│   │       ├── dialogs/
-│   │       └── layout/
-│   ├── pages/
-│   │   ├── Home/                         ← /home
-│   │   │   ├── Home.tsx
-│   │   │   └── Home.test.tsx
-│   │   ├── Account/                      ← /account
-│   │   │   ├── UpdatePaymentForm/
-│   │   │   │   ├── _local/
-│   │   │   │   │   └── usePaymentForm.ts
-│   │   │   │   ├── UpdatePaymentForm.tsx
-│   │   │   │   └── UpdatePaymentForm.test.tsx
-│   │   │   ├── Account.tsx
-│   │   │   └── Account.test.tsx
-│   │   ├── Users/                        ← /users
-│   │   │   ├── _local/
-│   │   │   │   └── useUsers.ts
-│   │   │   ├── Users.tsx
-│   │   │   ├── UsersList.tsx
-│   │   │   └── UsersList.test.tsx
-│   │   └── Posts/                        ← /posts
-│   │       ├── _common/
-│   │       │   ├── types/
-│   │       │   │   └── post-form-types.ts
-│   │       │   └── ui/
-│   │       │       └── PostForm.tsx
-│   │       ├── Edit/                     ← /posts/:id/edit
-│   │       │   ├── Edit.tsx
-│   │       │   └── Edit.test.tsx
-│   │       ├── New/                      ← /posts/new
-│   │       │   ├── New.tsx
-│   │       │   └── New.test.tsx
-│   │       ├── View/                     ← /posts/:id
-│   │       │   ├── View.tsx
-│   │       │   └── View.test.tsx
-│   │       ├── Posts.tsx
-│   │       └── Posts.css
-│   ├── App.tsx
-│   ├── App.test.tsx
-│   └── index.css
-├── domains/
-│   ├── _common/
-│   │   ├── constants/
-│   │   │   └── ApiPaths.ts
-│   │   └── types/
-│   │       └── Entity.ts
-│   ├── auth/
-│   │   ├── AuthService.ts
-│   │   └── AuthApi.ts
-│   ├── users/
-│   │   ├── User.ts
-│   │   ├── UserService.ts
-│   │   └── UserApi.ts
-│   ├── payments/
-│   │   ├── PaymentService.ts
-│   │   └── PaymentApi.ts
-│   └── posts/
-│       ├── Post.ts
-│       ├── PostService.ts
-│       └── PostApi.ts
-├── infra/
-│   └── http/
-│       ├── setup-axios.ts
-│       └── index.ts
-└── main.tsx
-```
-
-Notes:
-
-- `Account.tsx` composes `UpdatePaymentForm`.
-- `PostForm.tsx` is shared by New and Edit.
-- Payment rules live in `PaymentService`; requests in `PaymentApi`.
-- `usePaymentForm` connects the payment workflow to React state.
-- UI folders are grouped by purpose, not size labels like `sm`/`md`/`lg`.
-- Navigation paths and API paths have separate, named homes.
-
-Examples below use `@src/` as an alias for `src/`; configure it in TypeScript and your build/test tools. `AuthService`, `UserApi`, `Paths`, etc. are project code, not React APIs.
-
----
-
-<a id="function-components"></a>
-
-## 🧩 Function components
-
-Function components are the default for new React code. "Function component" describes the declaration style, not a commitment to functional programming.
-
-<a id="function-components-declaring"></a>
-
-### Declaring components
-
-#### Use PascalCase names
-
-React treats capitalized JSX names as component references:
+#### Snippet 2 – parent vs child composition
 
 ```tsx
-<UserProfile />
-```
+// Bad: logic split across temporary JSX variables
+function Parent() {
+  const posts: string[] = [];
+  const name = '';
 
-Use descriptive names.
+  let child = null;
+  if (something) {
+    child = (
+      <Box mb={2}>
+        Name: {name} Posts: {posts.length}
+      </Box>
+    );
+  } else {
+    child = (
+      <Box {...otherProps}>
+        Foo: {name} Bar: {posts.length}
+      </Box>
+    );
+  }
 
-#### Prefer function declarations for top-level components
-
-```tsx
-/**
- * Display a welcome message.
- */
-function WelcomeMessage() {
-  return <p>Welcome back.</p>;
-}
-
-export default WelcomeMessage;
-```
-
-Any declaration style lets parents precede children—JSX resolves a child when the parent renders, after the module loads. I use declarations for consistency with the TypeScript guide. Named arrow functions are valid and get useful stack-trace names; this is organizational preference, not a React requirement or performance win.
-
-Class components remain supported, but functions are the norm. Some patterns, such as a hand-rolled error boundary, may still need a class or library.
-
-#### Declare child components at module scope
-
-When small components share a file, put the parent first and children below.
-
-Never define a component inside another just to keep it nearby. That creates a new component type each render, remounting the subtree and losing local state. Define it outside and pass what it needs as props.
-
-#### Type the props
-
-Use a descriptive props type like `UserProfileProps` when the component is shared or the file has several components.
-
-```tsx
-interface WelcomeMessageProps {
-  name: string;
-}
-
-/**
- * Welcome a user by name.
- */
-function WelcomeMessage(props: WelcomeMessageProps) {
-  const { name } = props;
-
-  return <p>Welcome back, {name}.</p>;
-}
-
-export default WelcomeMessage;
-```
-
-In larger files, props interfaces go in the **Types** region. An `I` prefix is optional—use it only to distinguish from a related value or class.
-
-#### Let TypeScript infer the return type
-
-Components can return `null`, text, numbers, arrays, and other renderable content, so inference usually gives the clearest signature. For an explicit restriction: `ReactElement | null` for an element or nothing; `ReactNode` for broader content. Import types from React—do not assume a global `JSX` namespace.
-
-Keep ordinary client components synchronous; async support depends on the framework.
-
-<a id="function-components-organization"></a>
-
-### Organizing component code
-
-Top to bottom:
-
-1. Destructure props.
-2. Call hooks.
-3. Compute derived values.
-4. Define event handlers.
-5. Return the UI.
-
-This is a reading convention, not a template. Hooks still follow their rules regardless of where a section looks best.
-
-#### Keep shared constants and independent helpers outside
-
-Move fixed configuration and instance-independent helpers to module scope. It avoids rebuilding them per render, but mainly it makes their independence visible.
-
-Be selective:
-
-- Values based on props or state belong inside.
-- A helper that needs those values stays inside or takes them as arguments.
-- Never put mutable per-user state at module scope—it is shared across instances and possibly across server requests.
-
-Small allocations during render are cheap. Don't contort the design to avoid them.
-
-#### Keep rendering pure
-
-Rendering computes the UI; it does not send requests, write to storage, or mutate shared data. Use event handlers for user-triggered work and effects for syncing with external systems.
-
-If a value can be derived from props or state, derive it during render instead of storing a copy and syncing it with an effect.
-
-#### Follow the Rules of Hooks
-
-Call `useState`, `useEffect`, etc. at the top level of a component or custom hook—not in conditions, loops, or handlers. Put conditional logic inside the hook's callback. Keep dependencies accurate; never omit one just to stop an effect from running.
-
-#### Keep sibling layout in the parent
-
-The parent controls spacing and positioning between children, so the relationship is visible in one place rather than scattered across margins.
-
-#### Extract meaningful components, not every fragment
-
-Extract a child when a block has a clear responsibility, its own behavior, or enough markup to distract. Short JSX variables are fine too:
-
-```tsx
-/**
- * Display a short greeting.
- */
-function Greeting() {
-  const message = <p>Welcome back.</p>;
-
-  return <section>{message}</section>;
-}
-```
-
-A JSX value renders as `{message}`; it is not a component and should not be rendered as `<Message />`.
-
-For larger blocks, composition reads better:
-
-```tsx
-import Box from '@mui/material/Box';
-
-interface PostSummary {
-  id: string;
-  title: string;
-}
-
-interface SummaryProps {
-  name: string;
-  posts: readonly PostSummary[];
-}
-
-interface UserOverviewProps extends SummaryProps {
-  isCompact?: boolean;
-}
-
-/**
- * Default component. Display a user's post summary.
- */
-function UserOverview(props: UserOverviewProps) {
-  const { name, posts, isCompact = false } = props;
-
+  // A JSX value is rendered as {child}, never as <Child/>.
   return (
-    <Box sx={{ display: 'grid', gap: 2 }}>
-      {isCompact ? (
-        <CompactSummary name={name} posts={posts} />
-      ) : (
-        <DetailedSummary name={name} posts={posts} />
-      )}
+    <Box>
+      {child}
+      <SomeOtherChild />
     </Box>
   );
 }
 
-/**
- * Display a user's name and post count.
- */
-function CompactSummary(props: SummaryProps) {
-  const { name, posts } = props;
-
-  return (
-    <p>
-      {name}: {posts.length} posts
-    </p>
-  );
-}
-
-/**
- * Display a user's name and individual posts.
- */
-function DetailedSummary(props: SummaryProps) {
-  const { name, posts } = props;
-
-  return (
-    <section>
-      <h2>{name}'s posts</h2>
-      {posts.length === 0 ? (
-        <p>No posts yet.</p>
-      ) : (
-        <ul>
-          {posts.map(post => (
-            <li key={post.id}>{post.title}</li>
-          ))}
-        </ul>
-      )}
-    </section>
-  );
-}
-
-export default UserOverview;
+export default Parent;
 ```
 
-#### Memoize when it solves a problem
+```tsx
+// Good: extract child components
+import Box, { BoxProps } from '@mui/material/Box';
 
-Don't wrap every handler in `useCallback`. It matters when function identity matters—e.g. passing a callback to a memoized child whose re-renders are expensive. Same for `useMemo`: use it for calculations or identities that benefit from caching, not for every derived value. Write clear code first; measure before adding complexity.
+interface IChildProps extends BoxProps {
+  name?: string;
+  posts?: string[];
+}
 
-#### Keep the public component easy to find
+/** Default component. Display a list of <Child/> elements. */
+function Parent() {
+  return (
+    <Box>
+      {something ? (
+        <Child1 mb={1} name={name} posts={posts} />
+      ) : (
+        <Child2 name={name} posts={posts} />
+      )}
+      <SomeOtherChild />
+    </Box>
+  );
+}
 
-I put the default export at the bottom and start the main component's doc comment with `Default component.` Named exports are also valid; consistency matters more. Default exports also work directly with `React.lazy()`, which expects a default-exported component; named exports need a small wrapper.
+/** Display a child's name and number of posts. */
+function Child1(props: IChildProps) {
+  const { name = '', posts = [], ...otherProps } = props;
+  return (
+    <Box {...otherProps}>
+      Name: {name} Posts: {posts.length}
+    </Box>
+  );
+}
 
-<a id="function-components-props"></a>
+/** Lorum Ipsum. */
+function Child2(props: IChildProps) {
+  const { name = '', posts = [], ...otherProps } = props;
+  return (
+    <Box {...otherProps}>
+      Foo: {name} Bar: {posts.length}
+    </Box>
+  );
+}
 
-### Working with props
+export default Parent;
+```
 
-Destructure props at the top so inputs, defaults, and forwarded properties are visible.
+### Working with props <a name="functional-components-props"></a>
+- Destructure props at the top of the component. It's easier to set defaults and spot unused values, and wrapper components can mirror the child's props by reusing the same names.
+- In wrapper components, separate the props you handle from the ones you forward, and don't forward internal-only props to DOM elements. Be careful with styling props: MUI's `sx` can be an object, array, or function, so spreading it as an object isn't reliable.
+- Snippet 3 shows how to extract props, separate regions, and organize hooks.
 
-For wrappers:
-
-- Separate props you handle from props you forward.
-- Don't forward internal-only props to DOM elements.
-- Decide which underlying behavior callers may override.
-- Treat props and their nested values as inputs, not mutable state.
-
-Be careful with styling props. Material UI's `sx` accepts objects, arrays, and functions, so spreading it as an object is unreliable.
-
-#### Example: a login form
-
-Uses React Router (v7), Material UI, an `AuthService.login()` that resolves on success and rejects on failure, and a `Paths` module with `HOME` and `ACCOUNT`.
-
-- `LoginForm` handles form state, feedback, and navigation.
-- `AuthService` owns the authentication workflow.
-- `AuthApi` handles the HTTP request and response.
+#### Snippet 3 – component layout template
 
 ```tsx
 // LoginForm.tsx
-import { useId, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router';
-import Alert from '@mui/material/Alert';
-import Box from '@mui/material/Box';
-import type { BoxProps } from '@mui/material/Box';
+import { useSetState } from 'react-use';
+import Box, { BoxProps } from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 
 import Paths from '@src/_common/constants/Paths';
 import AuthService from '@src/domains/auth/AuthService';
+import Indicator from '@src/components/_common/ui/Indicator';
 
-// ========================================================================= //
-//                                   TYPES                                   //
-// ========================================================================= //
-
-type LoginFormProps = Omit<
-  BoxProps<'form'>,
-  'children' | 'component' | 'onSubmit'
->;
-
-interface LoginFields {
-  username: string;
-  password: string;
-}
-
-type SubmitState =
-  | { status: 'idle' }
-  | { status: 'submitting' }
-  | { status: 'error'; message: string };
-
-// ========================================================================= //
-//                                COMPONENTS                                 //
-// ========================================================================= //
+/******************************************************************************
+                               Components
+******************************************************************************/
 
 /**
- * Default component. Let a user log in.
+ * Default component. Log in a user.
  */
-function LoginForm(props: LoginFormProps) {
-  const { sx = [], ...boxProps } = props;
-
-  // Hooks.
-  const id = useId();
+function LoginForm(props: BoxProps<'form'>) {
+  const { sx, ...otherProps } = props;
   const navigate = useNavigate();
-  const [fields, setFields] = useState<LoginFields>({
+
+  // Init state
+  const [state, setState] = useSetState({
     username: '',
     password: '',
-  });
-  const [submitState, setSubmitState] = useState<SubmitState>({
-    status: 'idle',
+    error: '',
+    isLoading: false,
   });
 
-  // Derived values.
-  const isSubmitting = submitState.status === 'submitting';
-
-  // Event handlers.
-  const handleSubmit = async (
-    event: FormEvent<HTMLFormElement>,
-  ): Promise<void> => {
+  // Submit. HTTP details live in AuthService/AuthApi, never in a component.
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
-    if (isSubmitting) return;
-
-    const username = fields.username.trim();
-
-    if (!username || !fields.password) {
-      setSubmitState({
-        status: 'error',
-        message: 'Enter your username and password.',
-      });
-      return;
-    }
-
-    setSubmitState({ status: 'submitting' });
-
+    if (state.isLoading) return;
+    setState({ isLoading: true, error: '' });
     try {
       await AuthService.login({
-        username,
-        password: fields.password,
+        username: state.username.trim(),
+        password: state.password, // never silently alter a password
       });
-
-      setSubmitState({ status: 'idle' });
       navigate(Paths.ACCOUNT);
-    } catch {
-      setSubmitState({
-        status: 'error',
-        message: 'Unable to log in. Check your details or try again.',
-      });
+    } catch (err) {
+      setState({ isLoading: false, error: getErrorMessage(err) });
     }
   };
 
-  // UI.
+  // Return
   return (
     <Box
-      {...boxProps}
       component="form"
-      aria-busy={isSubmitting}
-      onSubmit={event => {
-        void handleSubmit(event);
-      }}
-      sx={[
-        { display: 'grid', gap: 2 },
-        ...(Array.isArray(sx) ? sx : [sx]),
-      ]}
+      onSubmit={submit}
+      sx={[{ position: 'relative' }, ...(Array.isArray(sx) ? sx : [sx])]}
+      {...otherProps}
     >
-      {submitState.status === 'error' && (
-        <Alert severity="error">{submitState.message}</Alert>
-      )}
+      {/* Indicator */}
+      {state.isLoading && <Indicator />}
+      {state.error && <p role="alert">{state.error}</p>}
 
+      {/* Input Fields */}
       <TextField
-        id={`${id}-username`}
-        name="username"
         label="Username"
-        autoComplete="username"
-        required
-        disabled={isSubmitting}
-        value={fields.username}
-        onChange={event => {
-          const username = event.currentTarget.value;
-          setFields(previous => ({ ...previous, username }));
-        }}
+        value={state.username}
+        onChange={e => setState({ username: e.currentTarget.value })}
       />
-
       <TextField
-        id={`${id}-password`}
-        name="password"
         label="Password"
         type="password"
-        autoComplete="current-password"
-        required
-        disabled={isSubmitting}
-        value={fields.password}
-        onChange={event => {
-          const password = event.currentTarget.value;
-          setFields(previous => ({ ...previous, password }));
-        }}
+        value={state.password}
+        onChange={e => setState({ password: e.currentTarget.value })}
       />
 
-      <Box sx={{ display: 'flex', gap: 1 }}>
-        <Button
-          type="button"
-          disabled={isSubmitting}
-          onClick={() => navigate(Paths.HOME)}
-        >
-          Cancel
-        </Button>
-
-        <Button
-          type="submit"
-          variant="contained"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? 'Logging in…' : 'Log in'}
-        </Button>
-      </Box>
+      {/* Action Buttons */}
+      <Button type="button" color="error" onClick={() => navigate(Paths.HOME)}>
+        Cancel
+      </Button>
+      <Button type="submit" color="primary" disabled={state.isLoading}>
+        Login
+      </Button>
     </Box>
   );
 }
 
-// ========================================================================= //
-//                                  EXPORT                                   //
-// ========================================================================= //
+/******************************************************************************
+                               Functions
+******************************************************************************/
+
+function getErrorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : 'Unable to log in.';
+}
+
+/******************************************************************************
+                               Export default
+******************************************************************************/
 
 export default LoginForm;
 ```
 
-Details:
+Using a real `<form>` with `type="submit"` means the keyboard works too, and the Cancel button needs `type="button"` so it doesn't submit. React 19's `useActionState` can handle the pending/error state for you, but the explicit handler works on any version.
 
-- Must render inside the router that supplies `useNavigate`.
-- Submission works via button or keyboard.
-- DOM handlers read `event.currentTarget.value`.
-- The input value is read before entering a state-updater callback.
-- Updates based on existing state use functional updaters.
-- Both success and failure leave the submitting state.
-- The password is never trimmed or silently changed.
-- The `sx` array preserves caller-supplied objects, arrays, and theme functions.
+<br/><b>***</b><br/>
 
-Keeping HTTP out of components is an architectural preference. It gives the UI a smaller API and keeps request handling reusable and testable.
+## The Container/Presenter pattern and state management <a name="container-presenter-state-management"></a>
 
-React 19's form actions and `useActionState` can manage pending/error states for this. The explicit `onSubmit` works with earlier versions and keeps each transition visible.
+If a component is complex, separate data-fetching and state logic (containers) from rendering logic (presenters). This keeps components testable and reusable. For state itself, combine `useState`, `useContext` (and sometimes a third-party store such as Redux) using the lightest tool that satisfies the data flow you need. Inside containers, values shared across _multiple sub-trees_ go in context or a store; for the rest, prop-drilling a few levels is fine. Keep state as close as possible to the components that need it.
 
-<a id="function-components-form-example"></a>
-
-#### Example: a form with controlled inputs
-
-Field values live in the parent. Each input owns only its display state: whether the user has left the field or tried to submit. Required-field errors are derived, not stored.
+### Container/Presenter pattern <a name="container-presenter-pattern"></a>
+- A **Container** component owns state, side effects, and data fetching. It passes data and callbacks down as props. The page component usually plays this role; it doesn't need a `Container` suffix.
+- A **Presenter** component is mostly visual: it receives props and renders UI with no knowledge of where data comes from. If a presenter needs its own state, it should only be display state (which tab is open, is a section expanded).
+- This separation makes presenters easy to test in isolation (just pass props) and lets you swap data sources in the container without touching the UI. A custom hook is another way to pull the workflow out of the component.
 
 ```tsx
-// ContactForm.tsx
-import { useId, useState } from 'react';
-import type { FormEvent } from 'react';
-
-interface ContactFields {
-  name: string;
-  email: string;
-}
-
-interface ContactFormProps {
-  onSubmit: (values: ContactFields) => void;
-}
-
-interface TextInputProps {
-  label: string;
-  value: string;
-  type?: 'text' | 'email';
-  isRequired?: boolean;
-  onChange: (value: string) => void;
-}
-
-/**
- * Default component. Collect a name and email address.
- */
-function ContactForm(props: ContactFormProps) {
-  const { onSubmit } = props;
-
-  const [state, setState] = useState<ContactFields>({
-    name: '',
-    email: '',
-  });
-
-  const isMissingRequiredValue =
-    !state.name.trim() || !state.email.trim();
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (isMissingRequiredValue) return;
-
-    onSubmit({
-      name: state.name.trim(),
-      email: state.email.trim(),
-    });
-  };
-
-  return (
-    <form onSubmit={handleSubmit}>
-      <TextInput
-        label="Name"
-        value={state.name}
-        isRequired
-        onChange={value => {
-          setState(previous => ({ ...previous, name: value }));
-        }}
-      />
-
-      <TextInput
-        label="Email"
-        type="email"
-        value={state.email}
-        isRequired
-        onChange={value => {
-          setState(previous => ({ ...previous, email: value }));
-        }}
-      />
-
-      <button type="submit">
-        Submit
-      </button>
-    </form>
-  );
-}
-
-/**
- * Display a labeled input and its required-field message.
- */
-function TextInput(props: TextInputProps) {
-  const {
-    label,
-    value,
-    type = 'text',
-    isRequired = false,
-    onChange,
-  } = props;
-
-  const id = useId();
-  const [isTouched, setIsTouched] = useState(false);
-
-  const isMissing = isRequired && value.trim().length === 0;
-  const isErrorVisible = isTouched && isMissing;
-
-  return (
-    <div>
-      <label htmlFor={id}>{label}</label>
-
-      <input
-        id={id}
-        type={type}
-        required={isRequired}
-        pattern={isRequired ? '.*\\S.*' : undefined}
-        value={value}
-        aria-invalid={isErrorVisible || undefined}
-        aria-describedby={isErrorVisible ? `${id}-error` : undefined}
-        onBlur={() => setIsTouched(true)}
-        onInvalid={() => setIsTouched(true)}
-        onChange={event => onChange(event.currentTarget.value)}
-      />
-
-      {isErrorVisible && (
-        <p id={`${id}-error`}>{label} is required.</p>
-      )}
-    </div>
-  );
-}
-
-export default ContactForm;
-```
-
-The submit button stays enabled. Disabling it hides why submission is blocked and removes it from keyboard focus. Instead, a submit attempt fires `invalid` on each failing field (including whitespace-only values, via `pattern`), which reveals that field's error.
-
-The native email input adds browser format validation on submit. It does not prove the address exists, and client validation never replaces server validation.
-
-The input does not trim on every keystroke—that interferes with typing spaces and cursor movement. Normalize at a deliberate boundary, such as submission, when the field's rules allow.
-
-The parent supplies `onSubmit`, so the form does not know which service handles the data. An async workflow should also provide pending and error feedback.
-
----
-
-<a id="containers-and-state-management"></a>
-
-## 🔄 Containers and state management
-
-Keep state as close as possible to the components that need it. When one component mixes data loading, workflow coordination, and a large UI, consider splitting those responsibilities—but don't add layers just to satisfy a pattern. A small component can own its own state and rendering.
-
-<a id="container-presenter-pattern"></a>
-
-### The Container/Presenter pattern
-
-| Role | Responsibility |
-| --- | --- |
-| **Container** | Coordinates data loading, application state, and calls to services or API clients. |
-| **Presenter** | Receives data and callbacks; renders the UI. |
-
-Presenters need not be stateless—they can own display behavior such as which tab is selected. The real boundary is whether the component needs to know about the workflow or where data comes from.
-
-Custom hooks are another way to separate these concerns; not every component needs a container file.
-
-#### Example: loading and displaying users
-
-Domain type:
-
-```ts
-// domains/users/User.ts
-export interface User {
-  id: string;
-  firstName: string;
-  lastName?: string | null;
-}
-```
-
-`UserApi.fetchAll({ signal })` returns `Promise<User[]>` and forwards the abort signal. This is a plain read with no workflow, so it calls `UserApi` directly. The API client is also where external response data gets checked—a return annotation does not validate JSON at runtime.
-
-##### Loading workflow
-
-A custom hook owns the request lifecycle. It lives in `_local/` because only this page uses it; move it when others need it, remembering each caller gets its own request and state.
-
-```ts
-// Users/_local/useUsers.ts
-import { useEffect, useState } from 'react';
-
-import type { User } from '@src/domains/users/User';
-import UserApi from '@src/domains/users/UserApi';
-
-type UsersState =
-  | { status: 'loading' }
-  | { status: 'success'; users: User[] }
-  | { status: 'error'; message: string };
-
-/**
- * Load users and track the request state.
- */
-function useUsers(): UsersState {
-  const [state, setState] = useState<UsersState>({
-    status: 'loading',
-  });
+// Users.tsx – container
+function Users() {
+  const [users, setUsers] = useState<User[]>([]);
 
   useEffect(() => {
-    const controller = new AbortController();
     let isActive = true;
-
-    const loadUsers = async (): Promise<void> => {
-      try {
-        const users = await UserApi.fetchAll({
-          signal: controller.signal,
-        });
-
-        if (isActive) {
-          setState({ status: 'success', users });
-        }
-      } catch {
-        if (isActive) {
-          setState({
-            status: 'error',
-            message: 'Unable to load users. Please try again later.',
-          });
-        }
-      }
-    };
-
-    void loadUsers();
-
-    return () => {
-      isActive = false;
-      controller.abort();
-    };
+    UserApi.fetchAll().then(users => {
+      if (isActive) setUsers(users); // ignore late results after unmount
+    });
+    return () => { isActive = false; };
   }, []);
 
-  return state;
-}
-
-export default useUsers;
-```
-
-Cleanup cancels the request and blocks late results. Strict Mode may run an extra setup/cleanup cycle in development; cleanup should make that safe rather than suppress it.
-
-This request has no changing inputs. If it depends on an ID, filter, or other reactive value, add it to the dependencies and handle the loading transition on change.
-
-The same effect could sit inside the container. Extracting it separates the workflow from rendering and makes it portable, but a small container inlining its own effect is also fine.
-
-##### Container
-
-The page component plays the container role; it doesn't need a `Container` suffix to do so.
-
-```tsx
-// Users/Users.tsx
-import useUsers from './_local/useUsers';
-import UsersList from './UsersList';
-
-/**
- * Default component. Load users and handle request states.
- */
-function Users() {
-  const state = useUsers();
-
-  if (state.status === 'loading') {
-    return <p role="status">Loading users…</p>;
-  }
-
-  if (state.status === 'error') {
-    return <p role="alert">{state.message}</p>;
-  }
-
-  return <UsersList users={state.users} />;
+  return <UsersList users={users} />;
 }
 
 export default Users;
 ```
 
-##### Presenter
+This is a plain read with no business workflow, so the container calls `UserApi` directly. Loading and error states are omitted for brevity; in a real app a router loader or query library usually handles those, along with caching and refetching, so you don't rebuild them in every container.
 
 ```tsx
-// Users/UsersList.tsx
-import type { User } from '@src/domains/users/User';
-
-interface UsersListProps {
-  users: readonly User[];
+// UsersList.tsx – presenter
+interface IUsersListProps {
+  users: User[];
 }
 
-/**
- * Default component. Display a list of users.
- */
-function UsersList(props: UsersListProps) {
-  const { users } = props;
-
-  if (users.length === 0) {
-    return <p>No users yet.</p>;
-  }
-
+function UsersList({ users }: IUsersListProps) {
   return (
     <ul>
       {users.map(user => (
-        <li key={user.id}>{getUserDisplayName(user)}</li>
+        <li key={user.id}>{getDisplayName(user)}</li>
       ))}
     </ul>
   );
 }
 
-/**
- * Combine the user's name fields for display.
- *
- * Used by {@link UsersList}.
- *
- * @private
- */
-function getUserDisplayName(user: User): string {
-  const name = `${user.firstName} ${user.lastName ?? ''}`.trim();
-  return name || 'Unnamed user';
+// Lives here because it's only relevant to how users are displayed.
+function getDisplayName(user: User): string {
+  const { firstName, lastName } = user;
+  return lastName ? `${firstName} ${lastName}` : firstName;
 }
 
 export default UsersList;
 ```
 
-The presenter doesn't know how users are fetched. Its formatting helper stays nearby because it is specific to this display, and it preserves the user's capitalization rather than recasing.
+The helper leaves the user's capitalization alone rather than recasing their name.
 
-#### Prefer existing data-loading tools when they fit
+### `useState` vs `useSetState` <a name="state-management-usestate"></a>
+- `useState` is fine for components with one or two state variables. It *replaces* the value, so when the state is an object you have to spread the previous value yourself: `setForm(prev => ({ ...prev, name }))`.
+- As state grows, switch to a hook such as [`useSetState`](https://github.com/streamich/react-use/blob/master/src/useSetState.ts) from `react-use`. It shallow-merges the patch you pass in, so `setState({ name })` keeps the other fields. Nested objects are replaced, not merged.
+- Grouping state into one object keeps every value prefixed with `state` and managed by a single updater, which reads well.
+- Neither hook returns a reset function. Build one from a defaults function: `const resetState = () => setState(Defaults());`. Because it merges, it only resets the keys you pass. That's handy in modal flows where you need to restore defaults.
+- Don't store what you can derive. A "field is required" error can be computed from the field's value instead of kept in a synced boolean, and a single `status: 'idle' | 'loading' | 'error'` beats several booleans that can contradict each other.
+- Context distributes a value; it doesn't own state. Changing it re-renders every consumer, so split unrelated concerns rather than making one giant provider. Calling the same custom hook in two components does *not* share state unless the hook reads from a provider or store.
 
-Effects make the lifecycle explicit, but larger apps benefit from a router loader or query library, which handle caching and deduplication, refetching and retries, loading/error states, and freshness. Don't rebuild those per container. A loader or query can call the same `UserApi`, or `UserService` when a workflow is involved.
+<br/><b>***</b><br/>
 
-<a id="choosing-and-updating-state"></a>
+## Misc styling rules <a name="misc-styling-rules"></a>
 
-### Choosing and updating state
+These items may not be enforced by the linter but they help keep React + TS projects readable.
 
-Choose by how values relate and how they're shared—not by the count of `useState` calls.
+### Styling the UI <a name="misc-styling-ui"></a>
+- Keep color tokens in `src/components/_common/styles/Colors.ts` instead of hardcoding hex strings in JSX. Group base colors, then expose them through semantic buckets so updates stay centralized.
+- If your component library already has a theme (MUI's palette, for example), use that as the source of truth rather than maintaining a competing color system. Semantic names don't guarantee accessible contrast, so check the real combinations.
 
-| Situation | A useful starting point |
-| --- | --- |
-| A value used by one component | `useState`. |
-| Several independent local values | Separate `useState` calls. |
-| Related fields that often change together | An object in `useState` or a shallow-merge hook. |
-| Several coordinated transitions | `useReducer`. |
-| State shared by a few nearby components | Lift to the nearest common parent. |
-| State needed across many nested branches | Context plus state or a reducer. |
-| Complex shared client state | A dedicated store such as Redux. |
-| Cached server data | Framework data layer, router loader, or query library. |
-
-A few levels of prop passing are fine. Context earns its place when threading the same values through unrelated intermediates hurts readability.
-
-Context distributes a value; it does not store or update state. Changing it re-renders all consumers, so split unrelated concerns rather than one giant provider. Calling the same custom hook in two components does not share state unless the hook connects to a provider or store.
-
-#### `useState` replaces values
-
-For object state, `useState` does not merge. Preserve other fields explicitly, and use a functional updater when the next value depends on the previous:
-
-```tsx
-setForm(previous => ({
-  ...previous,
-  name: value,
-}));
-```
-
-#### `useSetState` shallow-merges updates
-
-A hook like [`react-use`'s `useSetState`](https://github.com/streamich/react-use/blob/master/src/useSetState.ts) merges a patch into the current object:
-
-```tsx
-setState({ name: value });
-```
-
-The merge is **shallow**—nested objects are replaced unless merged explicitly. This is an optional convenience, not a required upgrade past two state variables.
-
-#### Reset behavior depends on the hook
-
-Neither `useState` nor `react-use`'s `useSetState` returns a reset function; the latter returns only state and updater. Define your own or pick a hook that provides one.
-
-For a fixed-shape state object, reset by merging in a fresh defaults object from a value factory function:
-
-```tsx
-interface DraftState {
-  name: string;
-  email: string;
-}
-
-const DraftDefaults = (): DraftState => ({
-  name: '',
-  email: '',
-});
-
-// Inside the component:
-const [state, setState] = useSetState<DraftState>(DraftDefaults());
-const resetState = () => setState(DraftDefaults());
-```
-
-Because this reset merges, it resets only the supplied fields and removes nothing. To replace the whole object or drop keys, use `useState`, a reducer, or a hook with explicit reset.
-
-#### Keep state minimal
-
-Don't store what can be derived. A required-field error can be computed from the field value rather than kept in a synced boolean. For async work, a status like `'idle' | 'loading' | 'success' | 'error'` beats several booleans that permit contradictory combinations.
-
----
-
-<a id="styling-and-everyday-conventions"></a>
-
-## 🎨 Styling and everyday conventions
-
-Small conventions make a codebase feel consistent. They're most useful when they remove decisions without adding friction.
-
-<a id="styling-the-ui"></a>
-
-### Styling the UI
-
-#### Use shared design tokens
-
-Keep reusable colors in a theme or token module, not scattered literals. Prefer semantic names by role: background, surface, border, primary text, muted text, error text.
+#### Snippet 4 – color tokens
 
 ```ts
 // src/components/_common/styles/Colors.ts
-
 const Base = {
   Grey: {
-    LIGHTEST: '#f9fafb',
-    LIGHT: '#e5e7eb',
-    MEDIUM: '#6b7280',
-    DARK: '#111827',
+    UltraLight: '#f2f2f2',
+    Lighter: '#e5e5e5',
+    Light: '#d3d3d3',
+    Default: '#808080',
+    Dark: '#a9a9a9',
+    Darker: '#404040',
+    UltraDark: '#0c0c0c',
   },
   Red: {
-    DEFAULT: '#b91c1c',
-    DARK: '#991b1b',
+    Default: '#ff0000',
+    Dark: '#8b0000',
   },
-  WHITE: '#ffffff',
+  White: {
+    Default: '#ffffff',
+  },
 } as const;
 
-const Colors = {
+export default {
   Background: {
-    DEFAULT: Base.Grey.LIGHTEST,
-    SURFACE: Base.WHITE,
-    SELECTED: Base.Grey.LIGHT,
+    Default: Base.Grey.Default,
+    White: Base.White.Default,
+    Hover: Base.Grey.Light,
   },
-  BORDER: Base.Grey.MEDIUM,
+  Border: Base.Grey.Dark,
   Text: {
-    DEFAULT: Base.Grey.DARK,
-    MUTED: Base.Grey.MEDIUM,
-    ERROR: Base.Red.DEFAULT,
+    Error: {
+      Default: Base.Red.Default,
+      Hover: Base.Red.Dark,
+    },
   },
 } as const;
-
-export default Colors;
 ```
 
-A component using those tokens—fixed layout in a CSS Module, inline style carrying only token values, one of which depends on state:
-
-```css
-/* UserCard.module.css */
-.card {
-  padding: 8px 16px;
-  border: 1px solid;
-  border-radius: 4px;
-  text-align: left;
-}
-```
+#### Snippet 5 – using shared colors
 
 ```tsx
-// UserCard.tsx
 import Colors from '@src/components/_common/styles/Colors';
 
-import styles from './UserCard.module.css';
+function Foo() {
+  return (
+    <div>
+      <div
+        style={{
+          marginBottom: 16,
+          fontSize: 12,
+          backgroundColor: Colors.Background.Default, // never '#808080'
+        }}
+      >
+        Hello
+      </div>
 
-interface UserCardProps {
-  name: string;
-  isSelected: boolean;
-  onSelect: () => void;
+      {/* A button, not a clickable div: it gets keyboard and focus behavior for free. */}
+      <button
+        type="button"
+        style={{ padding: 8 }}
+        onClick={() => alert('How are you?')}
+      >
+        How are you?
+      </button>
+    </div>
+  );
 }
+```
 
-/**
- * Default component. Display a user that can be selected.
- */
-function UserCard(props: UserCardProps) {
-  const { name, isSelected, onSelect } = props;
+Inline styles are fine for small dynamic values like these. Reusable styles, hover/focus states, and responsive layouts belong in CSS, CSS Modules, or your theme.
+
+### Callback parameter names <a name="misc-styling-callbacks"></a>
+- Give parameters meaningful names in general, but for one-line inline JSX callbacks a short placeholder is fine: `v` for a value, `e` for an event, `err` for an error. Just don't confuse an event with its value; a DOM `onChange` gives you an event, and the string is `e.currentTarget.value`.
+- For custom inputs, a value-based `onChange(value: string)` keeps the parent independent of DOM event details.
+
+#### Snippet 6
+
+```tsx
+function Parent() {
+  const [state, setState] = useSetState({ name: '', email: '' });
+  const isMissingRequired = !state.name.trim() || !state.email.trim();
 
   return (
-    <button
-      type="button"
-      className={styles.card}
-      aria-pressed={isSelected}
-      style={{
-        backgroundColor: isSelected
-          ? Colors.Background.SELECTED
-          : Colors.Background.SURFACE,
-        borderColor: Colors.BORDER,
-        color: Colors.Text.DEFAULT,
+    <form
+      onSubmit={e => {
+        e.preventDefault();
+        if (!isMissingRequired) {/* some API call, trim values here */}
       }}
-      onClick={onSelect}
     >
-      {name}
-    </button>
+      <CustomInput
+        label="Name"
+        value={state.name}
+        isRequired
+        onChange={v => setState({ name: v })}
+      />
+      <CustomInput
+        label="Email"
+        value={state.email}
+        isRequired
+        onChange={v => setState({ email: v })}
+      />
+      <button type="submit">Submit</button>
+    </form>
   );
 }
 
-export default UserCard;
-```
-
-Tokens are inline because they live in TypeScript. If most styling is CSS, expose them as custom properties so stylesheets can use them for hover and focus.
-
-If a component library provides a theme, use it as the source of truth—for Material UI, the palette and semantic `sx` values—rather than a competing system. Semantic names don't guarantee accessible contrast; check real combinations including hover, focus, disabled, and dark mode.
-
-#### Choose the right styling tool
-
-Inline styles for small dynamic values. CSS, CSS Modules, theme, or your styling system for reusable styles, responsive layouts, hover, and focus. Don't mix several approaches without reason.
-
-#### Use interactive elements for interactions
-
-Button for actions, link for navigation. A clickable `<div>` provides no keyboard interaction, focus behavior, or semantics. Prefer native elements before rebuilding them.
-
-<a id="callback-parameter-names"></a>
-
-### Callback parameter names
-
-| Input | Useful name |
-| --- | --- |
-| A DOM or React event | `event` |
-| A field's new value | `value` |
-| An error object | `error` or `err` |
-| A boolean validation result | `isInvalid` |
-| An item from a collection | Its domain name, such as `user` or `post` |
-
-Short names like `v` are fine in tiny callbacks when obvious. Don't shorten if readers must inspect the type to understand the argument.
-
-Don't confuse an event with its value:
-
-```tsx
-onChange={event => {
-  onValueChange(event.currentTarget.value);
-}}
-```
-
-For custom components, value-based callbacks keep the parent independent of DOM events. See [Example: a form with controlled inputs](#function-components-form-example).
-
-To report a validation result, use an explicit contract:
-
-```ts
-onChange: (value: string, isInvalid: boolean) => void;
-```
-
-Don't make the boolean optional unless `undefined` means something.
-
-<a id="other-conventions"></a>
-
-### Other conventions
-
-#### Keep formatting automatic
-
-Single quotes in JS/TS, double quotes in JSX attributes. With Prettier:
-
-```json
-{
-  "singleQuote": true,
-  "jsxSingleQuote": false
+function CustomInput(props: {
+  label: string;
+  value: string;
+  isRequired?: boolean;
+  onChange: (value: string) => void;
+}) {
+  const { label, value, isRequired = false, onChange } = props;
+  const isMissing = isRequired && !value.trim(); // derived, not stored
+  return (
+    <label>
+      {label}
+      <input
+        type="text"
+        required={isRequired}
+        value={value}
+        onChange={e => onChange(e.currentTarget.value)}
+      />
+      <div>{isMissing ? `${label} is required` : ''}</div>
+    </label>
+  );
 }
 ```
 
-Let the formatter decide so reviews focus on behavior.
+A few things worth noticing: the error is derived from the value instead of stored as a separate boolean, the input isn't trimmed on every keystroke (that fights the user while typing spaces; trim at submit instead), and the submit button stays enabled so the user can attempt a submit and see what's wrong. A disabled button can't even receive keyboard focus.
 
-#### Use stable keys
-
-Use stable identifiers from the data:
-
-```tsx
-users.map(user => <UserRow key={user.id} user={user} />)
-```
-
-Never generate a fresh key per render. Indexes break when items are inserted, removed, or reordered. `useId` is for accessibility relationships, not list keys.
-
-#### Make forms and actions accessible
-
-- Associate labels with inputs.
-- `type="button"` for non-submit buttons in forms.
-- Loading and error states understandable without color alone.
-- Preserve visible keyboard focus.
-- Meaningful alt text for informative images; empty alt for decorative ones.
-
-#### Test what the user can observe
-
-Test rendering, interactions, keyboard submission, loading, empty, and failure states. Don't tie tests to internal state or implementation details; a refactor with unchanged user-visible behavior shouldn't break them.
-
-With Vitest and React Testing Library, a test for the [contact form](#function-components-form-example) interacts like a user:
-
-```tsx
-// ContactForm.test.tsx
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { expect, test, vi } from 'vitest';
-
-import ContactForm from './ContactForm';
-
-test('submits trimmed values', async () => {
-  const user = userEvent.setup();
-  const onSubmit = vi.fn();
-
-  render(<ContactForm onSubmit={onSubmit} />);
-
-  await user.type(screen.getByLabelText('Name'), '  Ada Lovelace ');
-  await user.type(screen.getByLabelText('Email'), 'ada@example.com');
-  await user.click(screen.getByRole('button', { name: 'Submit' }));
-
-  expect(onSubmit).toHaveBeenCalledWith({
-    name: 'Ada Lovelace',
-    email: 'ada@example.com',
-  });
-});
-```
-
-Finding elements by label and role keeps the test passing if internal state changes shape.
-
-The goal matches the TypeScript guide: **clear responsibilities, predictable structure, and code that explains itself without making readers work too hard.**
+### Other rules <a name="misc-styling-other"></a>
+- Use single quotes for standard JS/TS code and double quotes for JSX attributes. Let Prettier enforce it (`"singleQuote": true, "jsxSingleQuote": false`).
+- Use stable IDs from the data as list keys. Array indexes break when items are inserted, removed, or reordered, and `useId` is for accessibility relationships, not list keys.
+- Associate labels with inputs, use `type="button"` for non-submit buttons inside forms, and don't rely on color alone to communicate loading or error states.
+- Test what the user can observe (labels, roles, interactions, empty and failure states), not internal state variables. A refactor shouldn't break a test if the behavior didn't change.
