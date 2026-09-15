@@ -1,4 +1,4 @@
-## React + TypeScript Best Practices
+# ⚛️ React + TypeScript Best Practices
 [![GitHub stars](https://img.shields.io/github/stars/seanpmaxwell/React-Ts-Best-Practices?style=flat-square)](https://github.com/seanpmaxwell/React-Ts-Best-Practices/stargazers)
 
 This guide covers React-specific habits that pair well with TypeScript. It assumes you already follow the [TypeScript best practices](https://github.com/seanpmaxwell/Typescript-Best-Practices) document; anything covered there isn't repeated here.
