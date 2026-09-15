@@ -72,7 +72,7 @@ tsconfig.json
 | `src/assets/` | Assets imported by application code. |
 | `src/_common/` | Shared code that is not tied to React or one domain. |
 | `src/components/` | Components, pages, and React-specific UI logic. |
-| `src/domains/` | Business rules, domain models, and domain-specific API services. |
+| `src/domains/` | Domain models, business services, and domain-specific API clients. |
 | `src/infra/` | Shared integrations, such as an HTTP client or browser-storage adapter. |
 | `src/main.tsx` | The application entry point. |
 
@@ -104,21 +104,22 @@ Use `.tsx` when a file contains JSX. Ordinary TypeScript helpers usually belong 
 
 For applications with several business areas, I prefer domain-based organization. See the [architecture section](https://github.com/seanpmaxwell/Typescript-Best-Practices/blob/main/README.md#architecture) of the TypeScript guide for the trade-offs.
 
-On the client, I use these names:
+Within a domain, I use these names:
 
 | File | Responsibility |
 | --- | --- |
 | `User.ts` | User-related types and model helpers. |
-| `UserOps.ts` | User-related business rules and workflows. |
-| `UserService.ts` | User-related API calls. |
+| `UserService.ts` | User-related business rules and workflows. |
+| `UserApi.ts` | User-related HTTP requests and response handling. |
+
+This keeps **Service** associated with business logic on both the frontend and backend. **Api** identifies the client-side boundary that communicates with the server.
 
 For example:
 
-- Checking whether a user has a particular role belongs in domain logic.
-- Choosing how to display that role belongs in the UI.
-- Fetching the user belongs in an API service.
-
-The `Ops` suffix is a house convention. “Service” does not have one universal meaning across frontend and backend projects.
+- Checking whether a user is eligible for an action belongs in domain logic.
+- Choosing how to display that eligibility belongs in the UI.
+- Coordinating an account-update workflow belongs in `UserService`.
+- Sending the account-update request belongs in `UserApi`.
 
 Client-side permission checks help control the UI; the server must still enforce authorization independently.
 
@@ -138,19 +139,32 @@ Keep reusable business rules independent of React where practical. A hook can co
 
 #### Keep dependencies flowing in a clear direction
 
-A typical flow is:
+A business workflow typically follows this path:
 
 ```text
 Component or custom hook
         ↓
-Domain operations and/or API service
+Domain service
         ↓
-Shared infrastructure
+Domain API client
+        ↓
+Shared HTTP client
 ```
 
-Not every interaction needs every layer. A simple data-loading container can call a service directly; a business workflow may go through an operations module first.
+Each part has a different job:
 
-Avoid making domain logic depend on components.
+- The **component or hook** handles React state, navigation, and UI interactions.
+- The **service** applies business rules and coordinates the workflow.
+- The **API client** handles endpoints, request payloads, and responses.
+- The **HTTP client** handles shared transport configuration.
+
+Not every request needs every layer.
+
+A container that simply loads users can call `UserApi.fetchAll()` directly. A workflow involving business validation, transformations, or several requests belongs in `UserService`.
+
+Avoid adding a service wrapper that only forwards a call without providing a useful boundary.
+
+Domain services should not depend on components or React hooks. Keep UI-specific behavior, such as navigation and opening dialogs, in the component or hook that owns it.
 
 <a id="project-structure-example"></a>
 
@@ -221,18 +235,19 @@ src/
 │   │   └── types/
 │   │       └── Entity.ts
 │   ├── auth/
-│   │   └── AuthService.ts
+│   │   ├── AuthService.ts
+│   │   └── AuthApi.ts
 │   ├── users/
 │   │   ├── User.ts
-│   │   ├── UserOps.ts
-│   │   └── UserService.ts
+│   │   ├── UserService.ts
+│   │   └── UserApi.ts
 │   ├── payments/
-│   │   ├── PaymentOps.ts
-│   │   └── PaymentService.ts
+│   │   ├── PaymentService.ts
+│   │   └── PaymentApi.ts
 │   └── posts/
 │       ├── Post.ts
-│       ├── PostOps.ts
-│       └── PostService.ts
+│       ├── PostService.ts
+│       └── PostApi.ts
 ├── infra/
 │   └── http/
 │       ├── setup-axios.ts
@@ -244,13 +259,14 @@ A few details worth noting:
 
 - `Account.tsx` composes `UpdatePaymentForm`.
 - `PostForm.tsx` is shared by the New and Edit pages.
-- Payment rules live in the payments domain; `usePaymentForm` handles their interaction with the form.
+- Payment rules and workflows live in `PaymentService`; HTTP requests live in `PaymentApi`.
+- `usePaymentForm` connects the payment workflow to React state and form behavior.
 - UI folders are grouped by purpose rather than vague size labels such as `sm`, `md`, and `lg`.
 - Shared navigation paths and API endpoint paths have separate, clearly named homes.
 
 The examples below use `@src/` as an alias for `src/`. Configure that alias in both TypeScript and the relevant build or test tools.
 
-Application-specific modules such as `AuthService`, `UserService`, and `Paths` are project code, not React APIs.
+Application-specific modules such as `AuthService`, `UserApi`, and `Paths` are project code, not React APIs.
 
 ---
 
@@ -525,10 +541,14 @@ This example uses:
 
 - React Router for navigation.
 - Material UI for controls.
-- An application `AuthService.login()` method that accepts credentials, resolves on success, and rejects on failure.
+- An application `AuthService.login()` method that accepts credentials, resolves when the login workflow succeeds, and rejects on failure.
 - A `Paths` module containing `HOME` and `ACCOUNT` route strings.
 
-The component handles form state and navigation. The service handles the HTTP request and the application’s authentication response.
+The responsibilities are separated:
+
+- `LoginForm` handles form state, feedback, and navigation.
+- `AuthService` owns the authentication workflow.
+- `AuthApi` handles the HTTP request and response used by that workflow.
 
 ```tsx
 // LoginForm.tsx
@@ -710,7 +730,7 @@ A few details matter here:
 - The password is not trimmed or otherwise silently changed.
 - The `sx` array preserves support for caller-supplied objects, arrays, and theme functions.
 
-Keeping HTTP details out of components is an architectural preference, not a React restriction. The benefit is a smaller UI API and reusable, independently testable request logic.
+Keeping HTTP details out of components is an architectural preference, not a React restriction. It gives the UI a smaller API and keeps request handling reusable and independently testable.
 
 ---
 
@@ -732,7 +752,7 @@ The pattern separates two responsibilities:
 
 | Role | Responsibility |
 | --- | --- |
-| **Container** | Coordinates data loading, application state, and interactions with services or domain operations. |
+| **Container** | Coordinates data loading, application state, and interactions with domain services or API clients. |
 | **Presenter** | Receives data and callbacks, then renders the UI. |
 
 Presenters do not need to be completely stateless. They can own local display behavior, such as whether a section is expanded or which tab is selected.
@@ -754,9 +774,11 @@ export interface User {
 }
 ```
 
-The application’s `UserService.fetchAll({ signal })` returns a `Promise<User[]>` and forwards the abort signal to its HTTP client.
+The application’s `UserApi.fetchAll({ signal })` returns a `Promise<User[]>` and forwards the abort signal to its HTTP client.
 
-The service is also the boundary for checking external response data. A TypeScript return annotation alone does not validate JSON at runtime.
+This is a straightforward read with no additional business workflow, so the container calls `UserApi` directly.
+
+The API client is also the boundary for checking external response data. A TypeScript return annotation alone does not validate JSON at runtime.
 
 ##### Container
 
@@ -765,7 +787,7 @@ The service is also the boundary for checking external response data. A TypeScri
 import { useEffect, useState } from 'react';
 
 import type { User } from '@src/domains/users/User';
-import UserService from '@src/domains/users/UserService';
+import UserApi from '@src/domains/users/UserApi';
 
 import UsersList from './UsersList';
 
@@ -788,7 +810,7 @@ function UsersContainer() {
 
     const loadUsers = async (): Promise<void> => {
       try {
-        const users = await UserService.fetchAll({
+        const users = await UserApi.fetchAll({
           signal: controller.signal,
         });
 
@@ -893,6 +915,8 @@ Those tools can handle concerns such as:
 - Keeping server data fresh.
 
 Avoid rebuilding those features separately in every container.
+
+A loader or query function can call the same `UserApi` module. If loading requires a business workflow, it can call `UserService` instead.
 
 <a id="state-management-usestate"></a>
 
@@ -1295,6 +1319,8 @@ The native email input also provides browser email-format validation during form
 Notice that the input does not trim the value on every keystroke. Doing that can interfere with typing spaces and moving the cursor.
 
 Normalize values at a deliberate boundary, such as submission, and only when the field’s rules allow it.
+
+The parent supplies `onSubmit`, so this form does not need to know which service or API client handles the submitted data. An asynchronous workflow should also provide appropriate pending and error feedback.
 
 If a custom callback needs to report a validation result, use an explicit contract:
 
