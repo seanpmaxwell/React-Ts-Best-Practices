@@ -14,19 +14,19 @@ The examples focus on client-side function components. Framework features such a
 
 - [🗂️ Project structure](#project-structure)
   - [Overview](#project-structure-overview)
-  - [Where code belongs](#project-structure-structuring)
+  - [Where code belongs](#project-structure-where-code-belongs)
   - [Example layout](#project-structure-example)
-- [🧩 Function components](#functional-components)
-  - [Declaring components](#functional-components-declaring)
-  - [Organizing component code](#functional-components-organization)
-  - [Working with props](#functional-components-props)
-- [🔄 Containers and state management](#container-presenter-state-management)
+- [🧩 Function components](#function-components)
+  - [Declaring components](#function-components-declaring)
+  - [Organizing component code](#function-components-organization)
+  - [Working with props](#function-components-props)
+- [🔄 Containers and state management](#containers-and-state-management)
   - [The Container/Presenter pattern](#container-presenter-pattern)
-  - [Choosing and updating state](#state-management-usestate)
-- [🎨 Styling and everyday conventions](#misc-styling-rules)
-  - [Styling the UI](#misc-styling-ui)
-  - [Callback parameter names](#misc-styling-callbacks)
-  - [Other conventions](#misc-styling-other)
+  - [Choosing and updating state](#choosing-and-updating-state)
+- [🎨 Styling and everyday conventions](#styling-and-everyday-conventions)
+  - [Styling the UI](#styling-the-ui)
+  - [Callback parameter names](#callback-parameter-names)
+  - [Other conventions](#other-conventions)
 
 ---
 
@@ -82,7 +82,7 @@ This is a house convention, not a React requirement. If your framework defines i
 
 Values embedded in a client bundle are public. Putting a value in `.env` does not make it secret once the build exposes it to browser code.
 
-<a id="project-structure-structuring"></a>
+<a id="project-structure-where-code-belongs"></a>
 
 ### Where code belongs
 
@@ -204,7 +204,7 @@ src/
 │   │   │   │   └── UpdatePaymentForm.test.tsx
 │   │   │   ├── Account.tsx
 │   │   │   └── Account.test.tsx
-│   │   ├── Users/
+│   │   ├── Users/                        ← /users
 │   │   │   ├── UsersContainer.tsx
 │   │   │   ├── UsersList.tsx
 │   │   │   └── UsersList.test.tsx
@@ -270,7 +270,7 @@ Application-specific modules such as `AuthService`, `UserApi`, and `Paths` are p
 
 ---
 
-<a id="functional-components"></a>
+<a id="function-components"></a>
 
 ## 🧩 Function components
 
@@ -278,7 +278,7 @@ Function components are the default choice for new React code. They work natural
 
 “Function component” describes how the component is declared. It does not mean the entire application follows functional programming.
 
-<a id="functional-components-declaring"></a>
+<a id="function-components-declaring"></a>
 
 ### Declaring components
 
@@ -307,7 +307,7 @@ function WelcomeMessage() {
 export default WelcomeMessage;
 ```
 
-Function declarations support hoisting, which makes it convenient to put parent components before their supporting children.
+You can put parent components before their supporting children with any declaration style: JSX only looks up a child component when the parent renders, after the module has finished loading. I prefer function declarations for consistency with the TypeScript guide.
 
 Named arrow functions are valid too and generally receive useful names in stack traces. This preference is about organization—not a React requirement or an inherent performance advantage.
 
@@ -361,7 +361,7 @@ Use type imports from React when needed. Do not assume the global `JSX` namespac
 
 Keep ordinary client components synchronous. Async component support depends on the rendering environment and framework.
 
-<a id="functional-components-organization"></a>
+<a id="function-components-organization"></a>
 
 ### Organizing component code
 
@@ -518,9 +518,9 @@ Start with clear code. Measure before adding performance-oriented complexity.
 
 I keep the default export at the bottom and start the main component’s documentation with `Default component.`
 
-That is a house convention. Named exports are also valid; consistency matters more than either style.
+That is a house convention. Named exports are also valid; consistency matters more than either style. A default export also works directly with `React.lazy()`, which expects the imported module’s default export to be a component; named exports need a small wrapper.
 
-<a id="functional-components-props"></a>
+<a id="function-components-props"></a>
 
 ### Working with props
 
@@ -539,7 +539,7 @@ Be especially careful with styling props. Material UI’s `sx` accepts objects, 
 
 This example uses:
 
-- React Router for navigation.
+- React Router (v7) for navigation.
 - Material UI for controls.
 - An application `AuthService.login()` method that accepts credentials, resolves when the login workflow succeeds, and rejects on failure.
 - A `Paths` module containing `HOME` and `ACCOUNT` route strings.
@@ -554,7 +554,7 @@ The responsibilities are separated:
 // LoginForm.tsx
 import { useId, useState } from 'react';
 import type { FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import type { BoxProps } from '@mui/material/Box';
@@ -633,7 +633,6 @@ function LoginForm(props: LoginFormProps) {
         password: fields.password,
       });
 
-      setFields(previous => ({ ...previous, password: '' }));
       setSubmitState({ status: 'idle' });
       navigate(Paths.ACCOUNT);
     } catch {
@@ -732,9 +731,149 @@ A few details matter here:
 
 Keeping HTTP details out of components is an architectural preference, not a React restriction. It gives the UI a smaller API and keeps request handling reusable and independently testable.
 
+In React 19, form actions and `useActionState` can manage the pending and error states for a submission like this. The example uses an explicit `onSubmit` handler so it also works with earlier versions of React and keeps each state transition visible.
+
+<a id="function-components-form-example"></a>
+
+#### Example: a form with controlled inputs
+
+This form keeps the field values in the parent. Each input owns only its local display state: whether the user has left the field or tried to submit the form.
+
+Required-field errors are derived from the values rather than stored as duplicate parent state.
+
+```tsx
+// ContactForm.tsx
+import { useId, useState } from 'react';
+import type { FormEvent } from 'react';
+
+interface ContactFields {
+  name: string;
+  email: string;
+}
+
+interface ContactFormProps {
+  onSubmit: (values: ContactFields) => void;
+}
+
+interface TextInputProps {
+  label: string;
+  value: string;
+  type?: 'text' | 'email';
+  isRequired?: boolean;
+  onChange: (value: string) => void;
+}
+
+/**
+ * Default component. Collect a name and email address.
+ */
+function ContactForm(props: ContactFormProps) {
+  const { onSubmit } = props;
+
+  const [state, setState] = useState<ContactFields>({
+    name: '',
+    email: '',
+  });
+
+  const isMissingRequiredValue =
+    !state.name.trim() || !state.email.trim();
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (isMissingRequiredValue) return;
+
+    onSubmit({
+      name: state.name.trim(),
+      email: state.email.trim(),
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <TextInput
+        label="Name"
+        value={state.name}
+        isRequired
+        onChange={value => {
+          setState(previous => ({ ...previous, name: value }));
+        }}
+      />
+
+      <TextInput
+        label="Email"
+        type="email"
+        value={state.email}
+        isRequired
+        onChange={value => {
+          setState(previous => ({ ...previous, email: value }));
+        }}
+      />
+
+      <button type="submit">
+        Submit
+      </button>
+    </form>
+  );
+}
+
+/**
+ * Display a labeled input and its required-field message.
+ */
+function TextInput(props: TextInputProps) {
+  const {
+    label,
+    value,
+    type = 'text',
+    isRequired = false,
+    onChange,
+  } = props;
+
+  const id = useId();
+  const [isTouched, setIsTouched] = useState(false);
+
+  const isMissing = isRequired && value.trim().length === 0;
+  const isErrorVisible = isTouched && isMissing;
+
+  return (
+    <div>
+      <label htmlFor={id}>{label}</label>
+
+      <input
+        id={id}
+        type={type}
+        required={isRequired}
+        pattern={isRequired ? '.*\\S.*' : undefined}
+        value={value}
+        aria-invalid={isErrorVisible || undefined}
+        aria-describedby={isErrorVisible ? `${id}-error` : undefined}
+        onBlur={() => setIsTouched(true)}
+        onInvalid={() => setIsTouched(true)}
+        onChange={event => onChange(event.currentTarget.value)}
+      />
+
+      {isErrorVisible && (
+        <p id={`${id}-error`}>{label} is required.</p>
+      )}
+    </div>
+  );
+}
+
+export default ContactForm;
+```
+
+The submit button stays enabled. Disabling it until the form is valid hides why submission isn’t possible, and a disabled button can’t receive keyboard focus. Instead, a submit attempt fires the `invalid` event on each field that fails native validation (including whitespace-only values, via `pattern`), which reveals that field’s error message.
+
+The native email input also provides browser email-format validation during form submission. It does not prove that an address exists, and client-side validation does not replace server-side validation.
+
+Notice that the input does not trim the value on every keystroke. Doing that can interfere with typing spaces and moving the cursor.
+
+Normalize values at a deliberate boundary, such as submission, and only when the field’s rules allow it.
+
+The parent supplies `onSubmit`, so this form does not need to know which service or API client handles the submitted data. An asynchronous workflow should also provide appropriate pending and error feedback.
+
 ---
 
-<a id="container-presenter-state-management"></a>
+<a id="containers-and-state-management"></a>
 
 ## 🔄 Containers and state management
 
@@ -903,6 +1042,94 @@ The presenter does not know how users are fetched. Its formatting helper stays n
 
 The helper also preserves the user’s chosen capitalization rather than automatically recasing their name.
 
+#### Example: moving the workflow into a custom hook
+
+A custom hook can replace the container file. The hook owns the loading workflow, and the component decides what to render for each state:
+
+```ts
+// Users/_local/useUsers.ts
+import { useEffect, useState } from 'react';
+
+import type { User } from '@src/domains/users/User';
+import UserApi from '@src/domains/users/UserApi';
+
+type UsersState =
+  | { status: 'loading' }
+  | { status: 'success'; users: User[] }
+  | { status: 'error'; message: string };
+
+/**
+ * Load users and track the request state.
+ */
+function useUsers(): UsersState {
+  const [state, setState] = useState<UsersState>({
+    status: 'loading',
+  });
+
+  useEffect(() => {
+    const controller = new AbortController();
+    let isActive = true;
+
+    const loadUsers = async (): Promise<void> => {
+      try {
+        const users = await UserApi.fetchAll({
+          signal: controller.signal,
+        });
+
+        if (isActive) {
+          setState({ status: 'success', users });
+        }
+      } catch {
+        if (isActive) {
+          setState({
+            status: 'error',
+            message: 'Unable to load users. Please try again later.',
+          });
+        }
+      }
+    };
+
+    void loadUsers();
+
+    return () => {
+      isActive = false;
+      controller.abort();
+    };
+  }, []);
+
+  return state;
+}
+
+export default useUsers;
+```
+
+```tsx
+// Users/Users.tsx
+import useUsers from './_local/useUsers';
+import UsersList from './UsersList';
+
+/**
+ * Default component. Display users and their request states.
+ */
+function Users() {
+  const state = useUsers();
+
+  if (state.status === 'loading') {
+    return <p role="status">Loading users…</p>;
+  }
+
+  if (state.status === 'error') {
+    return <p role="alert">{state.message}</p>;
+  }
+
+  return <UsersList users={state.users} />;
+}
+
+export default Users;
+```
+
+The hook lives in the page’s `_local/` folder because only this page uses it. Move it to a shared folder once other components need the same workflow, and remember that each component calling `useUsers` still gets its own request and state.
+
 #### Prefer existing data-loading tools when they fit
 
 An effect-based example makes the lifecycle explicit, but larger applications often benefit from a router loader or a query library.
@@ -918,7 +1145,7 @@ Avoid rebuilding those features separately in every container.
 
 A loader or query function can call the same `UserApi` module. If loading requires a business workflow, it can call `UserService` instead.
 
-<a id="state-management-usestate"></a>
+<a id="choosing-and-updating-state"></a>
 
 ### Choosing and updating state
 
@@ -1048,13 +1275,13 @@ For asynchronous work, a status such as `'idle'`, `'loading'`, `'success'`, or `
 
 ---
 
-<a id="misc-styling-rules"></a>
+<a id="styling-and-everyday-conventions"></a>
 
 ## 🎨 Styling and everyday conventions
 
 Small conventions help a codebase feel consistent. They are most useful when they remove decisions without making ordinary work harder.
 
-<a id="misc-styling-ui"></a>
+<a id="styling-the-ui"></a>
 
 ### Styling the UI
 
@@ -1094,7 +1321,7 @@ const Colors = {
   Background: {
     DEFAULT: Base.Grey.LIGHTEST,
     SURFACE: Base.WHITE,
-    HOVER: Base.Grey.LIGHT,
+    SELECTED: Base.Grey.LIGHT,
   },
   BORDER: Base.Grey.MEDIUM,
   Text: {
@@ -1107,43 +1334,59 @@ const Colors = {
 export default Colors;
 ```
 
-Here is a small component using those tokens:
+Here is a small component that uses those tokens. Its fixed layout lives in a CSS Module, and the inline style only carries token values, including one that changes with the component’s state:
+
+```css
+/* UserCard.module.css */
+.card {
+  padding: 8px 16px;
+  border: 1px solid;
+  border-radius: 4px;
+  text-align: left;
+}
+```
 
 ```tsx
+// UserCard.tsx
 import Colors from '@src/components/_common/styles/Colors';
 
+import styles from './UserCard.module.css';
+
+interface UserCardProps {
+  name: string;
+  isSelected: boolean;
+  onSelect: () => void;
+}
+
 /**
- * Default component. Display a greeting and an action.
+ * Default component. Display a user that can be selected.
  */
-function GreetingCard() {
+function UserCard(props: UserCardProps) {
+  const { name, isSelected, onSelect } = props;
+
   return (
-    <section
+    <button
+      type="button"
+      className={styles.card}
+      aria-pressed={isSelected}
       style={{
-        padding: 16,
-        backgroundColor: Colors.Background.DEFAULT,
+        backgroundColor: isSelected
+          ? Colors.Background.SELECTED
+          : Colors.Background.SURFACE,
+        borderColor: Colors.BORDER,
         color: Colors.Text.DEFAULT,
       }}
+      onClick={onSelect}
     >
-      <p style={{ marginBottom: 16 }}>Hello.</p>
-
-      <button
-        type="button"
-        style={{
-          padding: 8,
-          backgroundColor: Colors.Background.SURFACE,
-          color: Colors.Text.DEFAULT,
-          border: `1px solid ${Colors.BORDER}`,
-        }}
-        onClick={() => alert('How are you?')}
-      >
-        How are you?
-      </button>
-    </section>
+      {name}
+    </button>
   );
 }
 
-export default GreetingCard;
+export default UserCard;
 ```
+
+The tokens are applied inline because they live in TypeScript. If most of your styling lives in CSS, expose the tokens as CSS custom properties so stylesheets can also use them for hover and focus states.
 
 If a component library already provides a theme, use that as the source of truth rather than maintaining a competing color system. For Material UI, that often means using the theme’s palette and semantic `sx` values.
 
@@ -1165,7 +1408,7 @@ A clickable `<div>` does not automatically provide keyboard interaction, focus b
 
 Prefer native elements before rebuilding their behavior yourself.
 
-<a id="misc-styling-callbacks"></a>
+<a id="callback-parameter-names"></a>
 
 ### Callback parameter names
 
@@ -1191,136 +1434,7 @@ onChange={event => {
 
 For custom components, a value-based callback can keep the parent independent of DOM event details.
 
-#### Example: a controlled input
-
-This form keeps the field values in the parent. Each input owns only its local display state: whether it has been touched.
-
-Required-field errors are derived from the values rather than stored as duplicate parent state.
-
-```tsx
-import { useId, useState } from 'react';
-import type { FormEvent } from 'react';
-
-interface ContactFields {
-  name: string;
-  email: string;
-}
-
-interface ContactFormProps {
-  onSubmit: (values: ContactFields) => void;
-}
-
-interface TextInputProps {
-  label: string;
-  value: string;
-  type?: 'text' | 'email';
-  isRequired?: boolean;
-  onChange: (value: string) => void;
-}
-
-/**
- * Default component. Collect a name and email address.
- */
-function ContactForm(props: ContactFormProps) {
-  const { onSubmit } = props;
-
-  const [state, setState] = useState<ContactFields>({
-    name: '',
-    email: '',
-  });
-
-  const isMissingRequiredValue =
-    !state.name.trim() || !state.email.trim();
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (isMissingRequiredValue) return;
-
-    onSubmit({
-      name: state.name.trim(),
-      email: state.email.trim(),
-    });
-  };
-
-  return (
-    <form onSubmit={handleSubmit}>
-      <TextInput
-        label="Name"
-        value={state.name}
-        isRequired
-        onChange={value => {
-          setState(previous => ({ ...previous, name: value }));
-        }}
-      />
-
-      <TextInput
-        label="Email"
-        type="email"
-        value={state.email}
-        isRequired
-        onChange={value => {
-          setState(previous => ({ ...previous, email: value }));
-        }}
-      />
-
-      <button type="submit" disabled={isMissingRequiredValue}>
-        Submit
-      </button>
-    </form>
-  );
-}
-
-/**
- * Display a labeled input and its required-field message.
- */
-function TextInput(props: TextInputProps) {
-  const {
-    label,
-    value,
-    type = 'text',
-    isRequired = false,
-    onChange,
-  } = props;
-
-  const id = useId();
-  const [isTouched, setIsTouched] = useState(false);
-
-  const isMissing = isRequired && value.trim().length === 0;
-  const isErrorVisible = isTouched && isMissing;
-
-  return (
-    <div>
-      <label htmlFor={id}>{label}</label>
-
-      <input
-        id={id}
-        type={type}
-        required={isRequired}
-        value={value}
-        aria-invalid={isErrorVisible || undefined}
-        aria-describedby={isErrorVisible ? `${id}-error` : undefined}
-        onBlur={() => setIsTouched(true)}
-        onChange={event => onChange(event.currentTarget.value)}
-      />
-
-      {isErrorVisible && (
-        <p id={`${id}-error`}>{label} is required.</p>
-      )}
-    </div>
-  );
-}
-
-export default ContactForm;
-```
-
-The native email input also provides browser email-format validation during form submission. It does not prove that an address exists, and client-side validation does not replace server-side validation.
-
-Notice that the input does not trim the value on every keystroke. Doing that can interfere with typing spaces and moving the cursor.
-
-Normalize values at a deliberate boundary, such as submission, and only when the field’s rules allow it.
-
-The parent supplies `onSubmit`, so this form does not need to know which service or API client handles the submitted data. An asynchronous workflow should also provide appropriate pending and error feedback.
+For a complete form that uses value-based callbacks, see [Example: a form with controlled inputs](#function-components-form-example).
 
 If a custom callback needs to report a validation result, use an explicit contract:
 
@@ -1330,7 +1444,7 @@ onChange: (value: string, isInvalid: boolean) => void;
 
 Do not make the boolean optional unless `undefined` has a meaningful role.
 
-<a id="misc-styling-other"></a>
+<a id="other-conventions"></a>
 
 ### Other conventions
 
@@ -1374,5 +1488,34 @@ Array indexes are a poor fit when items can be inserted, removed, or reordered. 
 Test rendering, interactions, keyboard submission, loading states, empty states, and failure paths.
 
 Avoid tying every test to internal state variables or implementation details. A refactor should not break a test when the user-visible behavior is unchanged.
+
+For example, with Vitest and React Testing Library, a test for the [contact form](#function-components-form-example) can interact with it the way a user would:
+
+```tsx
+// ContactForm.test.tsx
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { expect, test, vi } from 'vitest';
+
+import ContactForm from './ContactForm';
+
+test('submits trimmed values', async () => {
+  const user = userEvent.setup();
+  const onSubmit = vi.fn();
+
+  render(<ContactForm onSubmit={onSubmit} />);
+
+  await user.type(screen.getByLabelText('Name'), '  Ada Lovelace ');
+  await user.type(screen.getByLabelText('Email'), 'ada@example.com');
+  await user.click(screen.getByRole('button', { name: 'Submit' }));
+
+  expect(onSubmit).toHaveBeenCalledWith({
+    name: 'Ada Lovelace',
+    email: 'ada@example.com',
+  });
+});
+```
+
+The test finds elements by their labels and roles, so it keeps passing if the form’s internal state changes shape.
 
 The overall goal is the same as in the TypeScript guide: **clear responsibilities, predictable structure, and code that explains itself without making readers work too hard.**
