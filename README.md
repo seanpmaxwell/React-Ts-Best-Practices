@@ -1,6 +1,3 @@
-Same treatment as before: every code sample, table, link, and anchor is preserved; I cut restatements, hedges, and connective filler. Should land around 60% of the original.
-
-```md
 # ⚛️ React + TypeScript Best Practices
 
 [![GitHub stars](https://img.shields.io/github/stars/seanpmaxwell/React-Ts-Best-Practices?style=flat-square)](https://github.com/seanpmaxwell/React-Ts-Best-Practices/stargazers)
@@ -187,7 +184,9 @@ src/
 │   │   │   ├── Account.tsx
 │   │   │   └── Account.test.tsx
 │   │   ├── Users/                        ← /users
-│   │   │   ├── UsersContainer.tsx
+│   │   │   ├── _local/
+│   │   │   │   └── useUsers.ts
+│   │   │   ├── Users.tsx
 │   │   │   ├── UsersList.tsx
 │   │   │   └── UsersList.test.tsx
 │   │   └── Posts/                        ← /posts
@@ -835,130 +834,11 @@ export interface User {
 }
 ```
 
-`UserApi.fetchAll({ signal })` returns `Promise<User[]>` and forwards the abort signal. This is a plain read with no workflow, so the container calls `UserApi` directly. The API client is also where external response data gets checked—a return annotation does not validate JSON at runtime.
+`UserApi.fetchAll({ signal })` returns `Promise<User[]>` and forwards the abort signal. This is a plain read with no workflow, so it calls `UserApi` directly. The API client is also where external response data gets checked—a return annotation does not validate JSON at runtime.
 
-##### Container
+##### Loading workflow
 
-```tsx
-// UsersContainer.tsx
-import { useEffect, useState } from 'react';
-
-import type { User } from '@src/domains/users/User';
-import UserApi from '@src/domains/users/UserApi';
-
-import UsersList from './UsersList';
-
-type UsersState =
-  | { status: 'loading' }
-  | { status: 'success'; users: User[] }
-  | { status: 'error'; message: string };
-
-/**
- * Default component. Load users and handle request states.
- */
-function UsersContainer() {
-  const [state, setState] = useState<UsersState>({
-    status: 'loading',
-  });
-
-  useEffect(() => {
-    const controller = new AbortController();
-    let isActive = true;
-
-    const loadUsers = async (): Promise<void> => {
-      try {
-        const users = await UserApi.fetchAll({
-          signal: controller.signal,
-        });
-
-        if (isActive) {
-          setState({ status: 'success', users });
-        }
-      } catch {
-        if (isActive) {
-          setState({
-            status: 'error',
-            message: 'Unable to load users. Please try again later.',
-          });
-        }
-      }
-    };
-
-    void loadUsers();
-
-    return () => {
-      isActive = false;
-      controller.abort();
-    };
-  }, []);
-
-  if (state.status === 'loading') {
-    return <p role="status">Loading users…</p>;
-  }
-
-  if (state.status === 'error') {
-    return <p role="alert">{state.message}</p>;
-  }
-
-  return <UsersList users={state.users} />;
-}
-
-export default UsersContainer;
-```
-
-Cleanup cancels the request and blocks late results. Strict Mode may run an extra setup/cleanup cycle in development; cleanup should make that safe rather than suppress it.
-
-This request has no changing inputs. If it depends on an ID, filter, or other reactive value, add it to the dependencies and handle the loading transition on change.
-
-##### Presenter
-
-```tsx
-// UsersList.tsx
-import type { User } from '@src/domains/users/User';
-
-interface UsersListProps {
-  users: readonly User[];
-}
-
-/**
- * Default component. Display a list of users.
- */
-function UsersList(props: UsersListProps) {
-  const { users } = props;
-
-  if (users.length === 0) {
-    return <p>No users yet.</p>;
-  }
-
-  return (
-    <ul>
-      {users.map(user => (
-        <li key={user.id}>{getUserDisplayName(user)}</li>
-      ))}
-    </ul>
-  );
-}
-
-/**
- * Combine the user's name fields for display.
- *
- * Used by {@link UsersList}.
- *
- * @private
- */
-function getUserDisplayName(user: User): string {
-  const name = `${user.firstName} ${user.lastName ?? ''}`.trim();
-  return name || 'Unnamed user';
-}
-
-export default UsersList;
-```
-
-The presenter doesn't know how users are fetched. Its formatting helper stays nearby because it is specific to this display, and it preserves the user's capitalization rather than recasing.
-
-#### Example: moving the workflow into a custom hook
-
-The hook owns loading; the component decides what to render:
+A custom hook owns the request lifecycle. It lives in `_local/` because only this page uses it; move it when others need it, remembering each caller gets its own request and state.
 
 ```ts
 // Users/_local/useUsers.ts
@@ -1017,13 +897,23 @@ function useUsers(): UsersState {
 export default useUsers;
 ```
 
+Cleanup cancels the request and blocks late results. Strict Mode may run an extra setup/cleanup cycle in development; cleanup should make that safe rather than suppress it.
+
+This request has no changing inputs. If it depends on an ID, filter, or other reactive value, add it to the dependencies and handle the loading transition on change.
+
+The same effect could sit inside the container. Extracting it separates the workflow from rendering and makes it portable, but a small container inlining its own effect is also fine.
+
+##### Container
+
+The page component plays the container role; it doesn't need a `Container` suffix to do so.
+
 ```tsx
 // Users/Users.tsx
 import useUsers from './_local/useUsers';
 import UsersList from './UsersList';
 
 /**
- * Default component. Display users and their request states.
+ * Default component. Load users and handle request states.
  */
 function Users() {
   const state = useUsers();
@@ -1042,7 +932,51 @@ function Users() {
 export default Users;
 ```
 
-The hook lives in `_local/` because only this page uses it. Move it when others need it—and remember each caller of `useUsers` gets its own request and state.
+##### Presenter
+
+```tsx
+// Users/UsersList.tsx
+import type { User } from '@src/domains/users/User';
+
+interface UsersListProps {
+  users: readonly User[];
+}
+
+/**
+ * Default component. Display a list of users.
+ */
+function UsersList(props: UsersListProps) {
+  const { users } = props;
+
+  if (users.length === 0) {
+    return <p>No users yet.</p>;
+  }
+
+  return (
+    <ul>
+      {users.map(user => (
+        <li key={user.id}>{getUserDisplayName(user)}</li>
+      ))}
+    </ul>
+  );
+}
+
+/**
+ * Combine the user's name fields for display.
+ *
+ * Used by {@link UsersList}.
+ *
+ * @private
+ */
+function getUserDisplayName(user: User): string {
+  const name = `${user.firstName} ${user.lastName ?? ''}`.trim();
+  return name || 'Unnamed user';
+}
+
+export default UsersList;
+```
+
+The presenter doesn't know how users are fetched. Its formatting helper stays nearby because it is specific to this display, and it preserves the user's capitalization rather than recasing.
 
 #### Prefer existing data-loading tools when they fit
 
@@ -1094,11 +1028,9 @@ The merge is **shallow**—nested objects are replaced unless merged explicitly.
 
 Neither `useState` nor `react-use`'s `useSetState` returns a reset function; the latter returns only state and updater. Define your own or pick a hook that provides one.
 
-For a fixed-shape state object:
+For a fixed-shape state object, reset by merging in a fresh defaults object from a value factory function:
 
 ```tsx
-import { useSetState } from 'react-use';
-
 interface DraftState {
   name: string;
   email: string;
@@ -1109,45 +1041,9 @@ const DraftDefaults = (): DraftState => ({
   email: '',
 });
 
-/**
- * Default component. Edit a contact draft and restore its defaults.
- */
-function ContactDraft() {
-  const [state, setState] = useSetState<DraftState>(DraftDefaults());
-
-  const resetState = () => setState(DraftDefaults());
-
-  return (
-    <section aria-label="Contact draft">
-      <label>
-        Name
-        <input
-          value={state.name}
-          onChange={event => {
-            setState({ name: event.currentTarget.value });
-          }}
-        />
-      </label>
-
-      <label>
-        Email
-        <input
-          type="email"
-          value={state.email}
-          onChange={event => {
-            setState({ email: event.currentTarget.value });
-          }}
-        />
-      </label>
-
-      <button type="button" onClick={resetState}>
-        Reset
-      </button>
-    </section>
-  );
-}
-
-export default ContactDraft;
+// Inside the component:
+const [state, setState] = useSetState<DraftState>(DraftDefaults());
+const resetState = () => setState(DraftDefaults());
 ```
 
 Because this reset merges, it resets only the supplied fields and removes nothing. To replace the whole object or drop keys, use `useState`, a reducer, or a hook with explicit reset.
@@ -1371,8 +1267,3 @@ test('submits trimmed values', async () => {
 Finding elements by label and role keeps the test passing if internal state changes shape.
 
 The goal matches the TypeScript guide: **clear responsibilities, predictable structure, and code that explains itself without making readers work too hard.**
-```
-
-One factual check while I was at it: the `useSetState` source confirms it returns exactly `[state, setState]` with an `Object.assign` merge, so the "no reset function" and "shallow merge" claims in your doc are accurate.
-
-Same offer as before—if you want it even shorter, the biggest remaining chunks are the duplicated `useEffect` body in `UsersContainer` and `useUsers` (you could show the hook only and reference it from the container), and the `ContactDraft` example. Want me to consolidate those?
