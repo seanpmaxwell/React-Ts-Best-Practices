@@ -1,8 +1,3 @@
-Here’s a complete rewrite with clearer language, consistent headings and navigation, corrected examples, and a clearer distinction between React requirements and your preferred conventions.
-
-I also fixed the component return-type explanation, event handling, state-hook behavior, request cleanup, prop forwarding, and accessibility issues.
-
-````md
 # ⚛️ React + TypeScript Best Practices
 
 [![GitHub stars](https://img.shields.io/github/stars/seanpmaxwell/React-Ts-Best-Practices?style=flat-square)](https://github.com/seanpmaxwell/React-Ts-Best-Practices/stargazers)
@@ -1355,4 +1350,3 @@ Test rendering, interactions, keyboard submission, loading states, empty states,
 Avoid tying every test to internal state variables or implementation details. A refactor should not break a test when the user-visible behavior is unchanged.
 
 The overall goal is the same as in the TypeScript guide: **clear responsibilities, predictable structure, and code that explains itself without making readers work too hard.**
-````
