@@ -1,14 +1,15 @@
+Same treatment as before: every code sample, table, link, and anchor is preserved; I cut restatements, hedges, and connective filler. Should land around 60% of the original.
+
+```md
 # ⚛️ React + TypeScript Best Practices
 
 [![GitHub stars](https://img.shields.io/github/stars/seanpmaxwell/React-Ts-Best-Practices?style=flat-square)](https://github.com/seanpmaxwell/React-Ts-Best-Practices/stargazers)
 
-Practical patterns for building React applications that are easier to read, test, and maintain.
+Practical patterns for React applications that are easier to read, test, and maintain.
 
-This guide builds on the [TypeScript best practices](https://github.com/seanpmaxwell/Typescript-Best-Practices) document. It focuses on React-specific decisions rather than repeating the general TypeScript conventions.
+This guide builds on the [TypeScript best practices](https://github.com/seanpmaxwell/Typescript-Best-Practices) document and covers React-specific decisions only. Some recommendations are React fundamentals; others are house conventions. Use what helps your team, and follow your framework's requirements where they differ.
 
-Some recommendations are React fundamentals; others are house conventions. Use the conventions that help your team, and follow your framework’s requirements where they differ.
-
-The examples focus on client-side function components. Framework features such as file-based routing and Server Components may call for a different project layout or data-loading approach.
+Examples focus on client-side function components. File-based routing and Server Components may call for a different layout or data-loading approach.
 
 ## 📚 Table of contents
 
@@ -34,18 +35,13 @@ The examples focus on client-side function components. Framework features such a
 
 ## 🗂️ Project structure
 
-A useful project structure answers two questions:
-
-- Where should new code go?
-- Where would someone else expect to find it?
-
-Start small. Add folders when they clarify responsibilities—not just because a diagram includes them.
+A good structure answers two questions: where should new code go, and where would someone else expect to find it? Start small; add folders when they clarify responsibilities.
 
 <a id="project-structure-overview"></a>
 
 ### Overview
 
-For a client-side application, I usually start with a layout like this:
+My usual client-side starting layout:
 
 ```text
 public/
@@ -68,19 +64,17 @@ tsconfig.json
 
 | Location | Purpose |
 | --- | --- |
-| `public/` | Static files served directly, according to your build tool’s conventions. |
+| `public/` | Static files served directly, per your build tool. |
 | `src/assets/` | Assets imported by application code. |
-| `src/_common/` | Shared code that is not tied to React or one domain. |
+| `src/_common/` | Shared code not tied to React or one domain. |
 | `src/components/` | Components, pages, and React-specific UI logic. |
-| `src/domains/` | Domain models, business services, and domain-specific API clients. |
-| `src/infra/` | Shared integrations, such as an HTTP client or browser-storage adapter. |
+| `src/domains/` | Domain models, business services, and domain API clients. |
+| `src/infra/` | Shared integrations, such as an HTTP client or storage adapter. |
 | `src/main.tsx` | The application entry point. |
 
-I use `main.tsx` for the application entry point and reserve `index.ts` for barrel exports.
+`main.tsx` is the entry point; `index.ts` is reserved for barrels. This is a house convention—if your framework defines its own entry points or routing folders, follow those.
 
-This is a house convention, not a React requirement. If your framework defines its own entry points or routing folders, follow those conventions instead.
-
-Values embedded in a client bundle are public. Putting a value in `.env` does not make it secret once the build exposes it to browser code.
+Anything in a client bundle is public. `.env` does not make a value secret once the build exposes it to the browser.
 
 <a id="project-structure-where-code-belongs"></a>
 
@@ -88,7 +82,7 @@ Values embedded in a client bundle are public. Putting a value in `.env` does no
 
 #### Name components and their files consistently
 
-Use PascalCase for component names, and match the filename to the main component it exports:
+PascalCase for components; match the filename to the main export:
 
 ```text
 Account/
@@ -96,50 +90,44 @@ Account/
 └── Account.test.tsx
 ```
 
-A small component can live in a single file. Give it a folder when it gains related tests, styles, hooks, or supporting components.
-
-Use `.tsx` when a file contains JSX. Ordinary TypeScript helpers usually belong in `.ts` files.
+A small component can be a single file. Give it a folder when it gains tests, styles, hooks, or supporting components. Use `.tsx` for files with JSX; plain helpers belong in `.ts`.
 
 #### Organize larger applications by domain
 
-For applications with several business areas, I prefer domain-based organization. See the [architecture section](https://github.com/seanpmaxwell/Typescript-Best-Practices/blob/main/README.md#architecture) of the TypeScript guide for the trade-offs.
+For apps with several business areas, I prefer domain-based organization. See the [architecture section](https://github.com/seanpmaxwell/Typescript-Best-Practices/blob/main/README.md#architecture) of the TypeScript guide for trade-offs.
 
-Within a domain, I use these names:
+Within a domain:
 
 | File | Responsibility |
 | --- | --- |
-| `User.ts` | User-related types and model helpers. |
-| `UserService.ts` | User-related business rules and workflows. |
-| `UserApi.ts` | User-related HTTP requests and response handling. |
+| `User.ts` | User types and model helpers. |
+| `UserService.ts` | User business rules and workflows. |
+| `UserApi.ts` | User HTTP requests and response handling. |
 
-This keeps **Service** associated with business logic on both the frontend and backend. **Api** identifies the client-side boundary that communicates with the server.
+**Service** means business logic on both frontend and backend; **Api** is the client-side boundary with the server. For example:
 
-For example:
+- Checking whether a user is eligible for an action → domain logic.
+- Deciding how to display that eligibility → UI.
+- Coordinating an account-update workflow → `UserService`.
+- Sending the account-update request → `UserApi`.
 
-- Checking whether a user is eligible for an action belongs in domain logic.
-- Choosing how to display that eligibility belongs in the UI.
-- Coordinating an account-update workflow belongs in `UserService`.
-- Sending the account-update request belongs in `UserApi`.
-
-Client-side permission checks help control the UI; the server must still enforce authorization independently.
+Client-side permission checks shape the UI; the server must still enforce authorization.
 
 #### Keep React-specific logic near its consumers
 
-A hook does not automatically belong in a global hooks folder.
+A hook does not automatically belong in a global hooks folder. Decide by scope:
 
-Use its scope to decide where it belongs:
+- Used by one component → stays near that component.
+- Shared by related components → their nearest shared folder.
+- Broadly reusable UI hook → `components/_common/hooks/`.
 
-- A hook used by one component stays near that component.
-- A hook shared by related components belongs in their nearest shared folder.
-- A broadly reusable UI hook can live in `components/_common/hooks/`.
+Prefix custom hooks with `use`, e.g. `usePageTitle` or `usePaymentForm`.
 
-Name custom hooks with a `use` prefix, such as `usePageTitle` or `usePaymentForm`.
+Keep reusable business rules independent of React where practical. A hook can coordinate those rules with component state without moving them into the UI layer.
 
-Keep reusable business rules independent of React where practical. A hook can coordinate those rules with component state without moving the rules themselves into the UI layer.
+#### Keep dependencies flowing in one direction
 
-#### Keep dependencies flowing in a clear direction
-
-A business workflow typically follows this path:
+A business workflow typically follows:
 
 ```text
 Component or custom hook
@@ -151,26 +139,20 @@ Domain API client
 Shared HTTP client
 ```
 
-Each part has a different job:
+- **Component or hook:** React state, navigation, UI interactions.
+- **Service:** Business rules and workflow coordination.
+- **API client:** Endpoints, payloads, responses.
+- **HTTP client:** Shared transport configuration.
 
-- The **component or hook** handles React state, navigation, and UI interactions.
-- The **service** applies business rules and coordinates the workflow.
-- The **API client** handles endpoints, request payloads, and responses.
-- The **HTTP client** handles shared transport configuration.
+Not every request needs every layer. A container that just loads users can call `UserApi.fetchAll()` directly; a workflow with validation, transformation, or several requests belongs in `UserService`. Don't add a service that merely forwards a call.
 
-Not every request needs every layer.
-
-A container that simply loads users can call `UserApi.fetchAll()` directly. A workflow involving business validation, transformations, or several requests belongs in `UserService`.
-
-Avoid adding a service wrapper that only forwards a call without providing a useful boundary.
-
-Domain services should not depend on components or React hooks. Keep UI-specific behavior, such as navigation and opening dialogs, in the component or hook that owns it.
+Domain services must not depend on components or hooks. Navigation, dialogs, and other UI behavior stay in the component or hook that owns them.
 
 <a id="project-structure-example"></a>
 
 ### Example layout
 
-Here is a more developed `src/` layout:
+A more developed `src/`:
 
 ```text
 src/
@@ -255,18 +237,16 @@ src/
 └── main.tsx
 ```
 
-A few details worth noting:
+Notes:
 
 - `Account.tsx` composes `UpdatePaymentForm`.
-- `PostForm.tsx` is shared by the New and Edit pages.
-- Payment rules and workflows live in `PaymentService`; HTTP requests live in `PaymentApi`.
-- `usePaymentForm` connects the payment workflow to React state and form behavior.
-- UI folders are grouped by purpose rather than vague size labels such as `sm`, `md`, and `lg`.
-- Shared navigation paths and API endpoint paths have separate, clearly named homes.
+- `PostForm.tsx` is shared by New and Edit.
+- Payment rules live in `PaymentService`; requests in `PaymentApi`.
+- `usePaymentForm` connects the payment workflow to React state.
+- UI folders are grouped by purpose, not size labels like `sm`/`md`/`lg`.
+- Navigation paths and API paths have separate, named homes.
 
-The examples below use `@src/` as an alias for `src/`. Configure that alias in both TypeScript and the relevant build or test tools.
-
-Application-specific modules such as `AuthService`, `UserApi`, and `Paths` are project code, not React APIs.
+Examples below use `@src/` as an alias for `src/`; configure it in TypeScript and your build/test tools. `AuthService`, `UserApi`, `Paths`, etc. are project code, not React APIs.
 
 ---
 
@@ -274,9 +254,7 @@ Application-specific modules such as `AuthService`, `UserApi`, and `Paths` are p
 
 ## 🧩 Function components
 
-Function components are the default choice for new React code. They work naturally with hooks and keep most component logic in one place.
-
-“Function component” describes how the component is declared. It does not mean the entire application follows functional programming.
+Function components are the default for new React code. "Function component" describes the declaration style, not a commitment to functional programming.
 
 <a id="function-components-declaring"></a>
 
@@ -290,11 +268,9 @@ React treats capitalized JSX names as component references:
 <UserProfile />
 ```
 
-Use descriptive names that explain what the component represents.
+Use descriptive names.
 
 #### Prefer function declarations for top-level components
-
-I prefer:
 
 ```tsx
 /**
@@ -307,23 +283,19 @@ function WelcomeMessage() {
 export default WelcomeMessage;
 ```
 
-You can put parent components before their supporting children with any declaration style: JSX only looks up a child component when the parent renders, after the module has finished loading. I prefer function declarations for consistency with the TypeScript guide.
+Any declaration style lets parents precede children—JSX resolves a child when the parent renders, after the module loads. I use declarations for consistency with the TypeScript guide. Named arrow functions are valid and get useful stack-trace names; this is organizational preference, not a React requirement or performance win.
 
-Named arrow functions are valid too and generally receive useful names in stack traces. This preference is about organization—not a React requirement or an inherent performance advantage.
-
-Classes remain supported, but function components are the usual choice for new components. Some specialized patterns, such as implementing an error boundary directly, may still involve a class or a supporting library.
+Class components remain supported, but functions are the norm. Some patterns, such as a hand-rolled error boundary, may still need a class or library.
 
 #### Declare child components at module scope
 
-When small components share a file, place the parent first and its supporting children below it.
+When small components share a file, put the parent first and children below.
 
-Do not define a component inside another component merely to keep it nearby. That creates a new component type on each render and can cause its subtree to remount and lose local state.
-
-Keep the definition outside and pass the values it needs as props.
+Never define a component inside another just to keep it nearby. That creates a new component type each render, remounting the subtree and losing local state. Define it outside and pass what it needs as props.
 
 #### Type the props
 
-Use a descriptive props type, such as `UserProfileProps`, rather than a generic name when the component is shared or the file contains several components.
+Use a descriptive props type like `UserProfileProps` when the component is shared or the file has several components.
 
 ```tsx
 interface WelcomeMessageProps {
@@ -342,30 +314,19 @@ function WelcomeMessage(props: WelcomeMessageProps) {
 export default WelcomeMessage;
 ```
 
-For larger files, place props interfaces in the **Types** region.
+In larger files, props interfaces go in the **Types** region. An `I` prefix is optional—use it only to distinguish from a related value or class.
 
-An `I` prefix is optional. Use it only if it helps distinguish the interface from a related value or class.
+#### Let TypeScript infer the return type
 
-#### Let TypeScript infer the return type by default
+Components can return `null`, text, numbers, arrays, and other renderable content, so inference usually gives the clearest signature. For an explicit restriction: `ReactElement | null` for an element or nothing; `ReactNode` for broader content. Import types from React—do not assume a global `JSX` namespace.
 
-Components do not always return a JSX element. They can also return `null`, text, numbers, arrays of renderable values, and other supported React content.
-
-Return-type inference usually provides the clearest signature.
-
-If you want an explicit restriction:
-
-- `ReactElement | null` describes an element or no rendered output.
-- `ReactNode` describes a broader range of renderable content.
-
-Use type imports from React when needed. Do not assume the global `JSX` namespace is available in every React typing configuration.
-
-Keep ordinary client components synchronous. Async component support depends on the rendering environment and framework.
+Keep ordinary client components synchronous; async support depends on the framework.
 
 <a id="function-components-organization"></a>
 
 ### Organizing component code
 
-Keep the component easy to scan from top to bottom:
+Top to bottom:
 
 1. Destructure props.
 2. Call hooks.
@@ -373,49 +334,37 @@ Keep the component easy to scan from top to bottom:
 4. Define event handlers.
 5. Return the UI.
 
-This is a reading convention, not a rigid template. Hooks still need to follow their rules regardless of where a section looks best.
+This is a reading convention, not a template. Hooks still follow their rules regardless of where a section looks best.
 
 #### Keep shared constants and independent helpers outside
 
-Move fixed configuration and helpers that do not depend on a component instance to module scope.
-
-This avoids rebuilding them during each render, but the bigger benefit is making their independence clear.
+Move fixed configuration and instance-independent helpers to module scope. It avoids rebuilding them per render, but mainly it makes their independence visible.
 
 Be selective:
 
-- Values based on current props or state usually belong inside the component.
-- A helper can stay inside when it needs those values, or accept them as explicit arguments.
-- Do not move mutable per-user state to module scope. Module values are shared between component instances and may also be shared across server requests.
+- Values based on props or state belong inside.
+- A helper that needs those values stays inside or takes them as arguments.
+- Never put mutable per-user state at module scope—it is shared across instances and possibly across server requests.
 
-Creating a small object or callback during rendering is usually inexpensive. Do not complicate the design just to avoid every allocation.
+Small allocations during render are cheap. Don't contort the design to avoid them.
 
 #### Keep rendering pure
 
-Rendering should calculate what the UI looks like—not send requests, write to storage, or mutate shared data.
+Rendering computes the UI; it does not send requests, write to storage, or mutate shared data. Use event handlers for user-triggered work and effects for syncing with external systems.
 
-Use event handlers for work caused by a user action. Use effects when the component needs to synchronize with an external system.
-
-If a value can be calculated from existing props or state, calculate it during rendering instead of storing a second copy and synchronizing it with an effect.
+If a value can be derived from props or state, derive it during render instead of storing a copy and syncing it with an effect.
 
 #### Follow the Rules of Hooks
 
-Call hooks such as `useState` and `useEffect` at the top level of a component or custom hook, not inside conditions, loops, or event handlers.
-
-Put conditional behavior inside the hook’s callback when appropriate.
-
-Keep effect dependencies accurate. Do not omit a dependency just to stop an effect from running.
+Call `useState`, `useEffect`, etc. at the top level of a component or custom hook—not in conditions, loops, or handlers. Put conditional logic inside the hook's callback. Keep dependencies accurate; never omit one just to stop an effect from running.
 
 #### Keep sibling layout in the parent
 
-The parent should usually control spacing and positioning between its children.
-
-That makes the relationship between sibling components visible in one place instead of spreading it across unrelated margins and callbacks.
+The parent controls spacing and positioning between children, so the relationship is visible in one place rather than scattered across margins.
 
 #### Extract meaningful components, not every fragment
 
-A child component is useful when a block has a clear responsibility, its own behavior, or enough markup to distract from the parent.
-
-Short JSX variables are also fine:
+Extract a child when a block has a clear responsibility, its own behavior, or enough markup to distract. Short JSX variables are fine too:
 
 ```tsx
 /**
@@ -428,9 +377,9 @@ function Greeting() {
 }
 ```
 
-A JSX value is rendered with `{message}`. It is not a component function, so it should not be rendered as `<Message />`.
+A JSX value renders as `{message}`; it is not a component and should not be rendered as `<Message />`.
 
-For larger blocks, composition usually reads better:
+For larger blocks, composition reads better:
 
 ```tsx
 import Box from '@mui/material/Box';
@@ -504,51 +453,36 @@ function DetailedSummary(props: SummaryProps) {
 export default UserOverview;
 ```
 
-#### Use memoization when it solves a problem
+#### Memoize when it solves a problem
 
-Do not wrap every handler in `useCallback`.
-
-It is useful when function identity matters—for example, when passing a callback to a memoized child whose unnecessary renders are expensive.
-
-Likewise, use `useMemo` for calculations or identities that benefit from caching, not as a requirement for ordinary derived values.
-
-Start with clear code. Measure before adding performance-oriented complexity.
+Don't wrap every handler in `useCallback`. It matters when function identity matters—e.g. passing a callback to a memoized child whose re-renders are expensive. Same for `useMemo`: use it for calculations or identities that benefit from caching, not for every derived value. Write clear code first; measure before adding complexity.
 
 #### Keep the public component easy to find
 
-I keep the default export at the bottom and start the main component’s documentation with `Default component.`
-
-That is a house convention. Named exports are also valid; consistency matters more than either style. A default export also works directly with `React.lazy()`, which expects the imported module’s default export to be a component; named exports need a small wrapper.
+I put the default export at the bottom and start the main component's doc comment with `Default component.` Named exports are also valid; consistency matters more. Default exports also work directly with `React.lazy()`, which expects a default-exported component; named exports need a small wrapper.
 
 <a id="function-components-props"></a>
 
 ### Working with props
 
-Destructure props near the top of the component. This makes its inputs, defaults, and forwarded properties easy to see.
+Destructure props at the top so inputs, defaults, and forwarded properties are visible.
 
-For wrapper components:
+For wrappers:
 
-- Separate the props your wrapper handles from those it forwards.
-- Do not forward internal-only props to DOM elements.
+- Separate props you handle from props you forward.
+- Don't forward internal-only props to DOM elements.
 - Decide which underlying behavior callers may override.
 - Treat props and their nested values as inputs, not mutable state.
 
-Be especially careful with styling props. Material UI’s `sx` accepts objects, arrays, and functions, so spreading it as if it were always an object is not reliable.
+Be careful with styling props. Material UI's `sx` accepts objects, arrays, and functions, so spreading it as an object is unreliable.
 
 #### Example: a login form
 
-This example uses:
-
-- React Router (v7) for navigation.
-- Material UI for controls.
-- An application `AuthService.login()` method that accepts credentials, resolves when the login workflow succeeds, and rejects on failure.
-- A `Paths` module containing `HOME` and `ACCOUNT` route strings.
-
-The responsibilities are separated:
+Uses React Router (v7), Material UI, an `AuthService.login()` that resolves on success and rejects on failure, and a `Paths` module with `HOME` and `ACCOUNT`.
 
 - `LoginForm` handles form state, feedback, and navigation.
 - `AuthService` owns the authentication workflow.
-- `AuthApi` handles the HTTP request and response used by that workflow.
+- `AuthApi` handles the HTTP request and response.
 
 ```tsx
 // LoginForm.tsx
@@ -718,28 +652,26 @@ function LoginForm(props: LoginFormProps) {
 export default LoginForm;
 ```
 
-A few details matter here:
+Details:
 
-- The component must render inside the router that supplies `useNavigate`.
-- Submitting the form works through the button or the keyboard.
-- DOM change handlers read `event.currentTarget.value`.
+- Must render inside the router that supplies `useNavigate`.
+- Submission works via button or keyboard.
+- DOM handlers read `event.currentTarget.value`.
 - The input value is read before entering a state-updater callback.
-- State updates based on existing state use functional updaters.
+- Updates based on existing state use functional updaters.
 - Both success and failure leave the submitting state.
-- The password is not trimmed or otherwise silently changed.
-- The `sx` array preserves support for caller-supplied objects, arrays, and theme functions.
+- The password is never trimmed or silently changed.
+- The `sx` array preserves caller-supplied objects, arrays, and theme functions.
 
-Keeping HTTP details out of components is an architectural preference, not a React restriction. It gives the UI a smaller API and keeps request handling reusable and independently testable.
+Keeping HTTP out of components is an architectural preference. It gives the UI a smaller API and keeps request handling reusable and testable.
 
-In React 19, form actions and `useActionState` can manage the pending and error states for a submission like this. The example uses an explicit `onSubmit` handler so it also works with earlier versions of React and keeps each state transition visible.
+React 19's form actions and `useActionState` can manage pending/error states for this. The explicit `onSubmit` works with earlier versions and keeps each transition visible.
 
 <a id="function-components-form-example"></a>
 
 #### Example: a form with controlled inputs
 
-This form keeps the field values in the parent. Each input owns only its local display state: whether the user has left the field or tried to submit the form.
-
-Required-field errors are derived from the values rather than stored as duplicate parent state.
+Field values live in the parent. Each input owns only its display state: whether the user has left the field or tried to submit. Required-field errors are derived, not stored.
 
 ```tsx
 // ContactForm.tsx
@@ -861,15 +793,13 @@ function TextInput(props: TextInputProps) {
 export default ContactForm;
 ```
 
-The submit button stays enabled. Disabling it until the form is valid hides why submission isn’t possible, and a disabled button can’t receive keyboard focus. Instead, a submit attempt fires the `invalid` event on each field that fails native validation (including whitespace-only values, via `pattern`), which reveals that field’s error message.
+The submit button stays enabled. Disabling it hides why submission is blocked and removes it from keyboard focus. Instead, a submit attempt fires `invalid` on each failing field (including whitespace-only values, via `pattern`), which reveals that field's error.
 
-The native email input also provides browser email-format validation during form submission. It does not prove that an address exists, and client-side validation does not replace server-side validation.
+The native email input adds browser format validation on submit. It does not prove the address exists, and client validation never replaces server validation.
 
-Notice that the input does not trim the value on every keystroke. Doing that can interfere with typing spaces and moving the cursor.
+The input does not trim on every keystroke—that interferes with typing spaces and cursor movement. Normalize at a deliberate boundary, such as submission, when the field's rules allow.
 
-Normalize values at a deliberate boundary, such as submission, and only when the field’s rules allow it.
-
-The parent supplies `onSubmit`, so this form does not need to know which service or API client handles the submitted data. An asynchronous workflow should also provide appropriate pending and error feedback.
+The parent supplies `onSubmit`, so the form does not know which service handles the data. An async workflow should also provide pending and error feedback.
 
 ---
 
@@ -877,32 +807,24 @@ The parent supplies `onSubmit`, so this form does not need to know which service
 
 ## 🔄 Containers and state management
 
-Keep state as close as possible to the components that need it.
-
-When a component starts mixing several responsibilities—loading data, coordinating workflows, and rendering a large UI—consider separating those responsibilities.
-
-Do not create extra layers just to satisfy a pattern. A small component can reasonably handle its own state and rendering.
+Keep state as close as possible to the components that need it. When one component mixes data loading, workflow coordination, and a large UI, consider splitting those responsibilities—but don't add layers just to satisfy a pattern. A small component can own its own state and rendering.
 
 <a id="container-presenter-pattern"></a>
 
 ### The Container/Presenter pattern
 
-The pattern separates two responsibilities:
-
 | Role | Responsibility |
 | --- | --- |
-| **Container** | Coordinates data loading, application state, and interactions with domain services or API clients. |
-| **Presenter** | Receives data and callbacks, then renders the UI. |
+| **Container** | Coordinates data loading, application state, and calls to services or API clients. |
+| **Presenter** | Receives data and callbacks; renders the UI. |
 
-Presenters do not need to be completely stateless. They can own local display behavior, such as whether a section is expanded or which tab is selected.
+Presenters need not be stateless—they can own display behavior such as which tab is selected. The real boundary is whether the component needs to know about the workflow or where data comes from.
 
-The useful boundary is whether the component needs to know about the application workflow or where its data comes from.
-
-Custom hooks are another way to separate these concerns. You do not need a separate container file for every component.
+Custom hooks are another way to separate these concerns; not every component needs a container file.
 
 #### Example: loading and displaying users
 
-The examples use this domain type:
+Domain type:
 
 ```ts
 // domains/users/User.ts
@@ -913,11 +835,7 @@ export interface User {
 }
 ```
 
-The application’s `UserApi.fetchAll({ signal })` returns a `Promise<User[]>` and forwards the abort signal to its HTTP client.
-
-This is a straightforward read with no additional business workflow, so the container calls `UserApi` directly.
-
-The API client is also the boundary for checking external response data. A TypeScript return annotation alone does not validate JSON at runtime.
+`UserApi.fetchAll({ signal })` returns `Promise<User[]>` and forwards the abort signal. This is a plain read with no workflow, so the container calls `UserApi` directly. The API client is also where external response data gets checked—a return annotation does not validate JSON at runtime.
 
 ##### Container
 
@@ -988,11 +906,9 @@ function UsersContainer() {
 export default UsersContainer;
 ```
 
-The cleanup requests cancellation and prevents late results from updating this effect’s state.
+Cleanup cancels the request and blocks late results. Strict Mode may run an extra setup/cleanup cycle in development; cleanup should make that safe rather than suppress it.
 
-React Strict Mode may run an extra effect setup-and-cleanup cycle during development. Cleanup should make that safe rather than trying to suppress it.
-
-This example has no changing request inputs. If the request depends on a user ID, filter, or other reactive value, include it in the effect’s dependencies and handle the loading transition when it changes.
+This request has no changing inputs. If it depends on an ID, filter, or other reactive value, add it to the dependencies and handle the loading transition on change.
 
 ##### Presenter
 
@@ -1038,13 +954,11 @@ function getUserDisplayName(user: User): string {
 export default UsersList;
 ```
 
-The presenter does not know how users are fetched. Its formatting helper stays nearby because it is specific to this display.
-
-The helper also preserves the user’s chosen capitalization rather than automatically recasing their name.
+The presenter doesn't know how users are fetched. Its formatting helper stays nearby because it is specific to this display, and it preserves the user's capitalization rather than recasing.
 
 #### Example: moving the workflow into a custom hook
 
-A custom hook can replace the container file. The hook owns the loading workflow, and the component decides what to render for each state:
+The hook owns loading; the component decides what to render:
 
 ```ts
 // Users/_local/useUsers.ts
@@ -1128,53 +1042,36 @@ function Users() {
 export default Users;
 ```
 
-The hook lives in the page’s `_local/` folder because only this page uses it. Move it to a shared folder once other components need the same workflow, and remember that each component calling `useUsers` still gets its own request and state.
+The hook lives in `_local/` because only this page uses it. Move it when others need it—and remember each caller of `useUsers` gets its own request and state.
 
 #### Prefer existing data-loading tools when they fit
 
-An effect-based example makes the lifecycle explicit, but larger applications often benefit from a router loader or a query library.
-
-Those tools can handle concerns such as:
-
-- Caching and request deduplication.
-- Refetching and retries.
-- Loading and error states.
-- Keeping server data fresh.
-
-Avoid rebuilding those features separately in every container.
-
-A loader or query function can call the same `UserApi` module. If loading requires a business workflow, it can call `UserService` instead.
+Effects make the lifecycle explicit, but larger apps benefit from a router loader or query library, which handle caching and deduplication, refetching and retries, loading/error states, and freshness. Don't rebuild those per container. A loader or query can call the same `UserApi`, or `UserService` when a workflow is involved.
 
 <a id="choosing-and-updating-state"></a>
 
 ### Choosing and updating state
 
-Choose state tools based on how values relate and how they are shared—not on the number of `useState` calls.
+Choose by how values relate and how they're shared—not by the count of `useState` calls.
 
 | Situation | A useful starting point |
 | --- | --- |
 | A value used by one component | `useState`. |
 | Several independent local values | Separate `useState` calls. |
-| Related fields that often change together | An object in `useState` or a shallow-merge state hook. |
-| Several coordinated state transitions | `useReducer`. |
-| State shared by a few nearby components | Lift it to their nearest common parent and pass props. |
-| State needed across many nested branches | Context combined with state or a reducer. |
-| Complex shared client state | A dedicated store, such as Redux, when its capabilities are useful. |
-| Cached server data | A framework data layer, router loader, or query library. |
+| Related fields that often change together | An object in `useState` or a shallow-merge hook. |
+| Several coordinated transitions | `useReducer`. |
+| State shared by a few nearby components | Lift to the nearest common parent. |
+| State needed across many nested branches | Context plus state or a reducer. |
+| Complex shared client state | A dedicated store such as Redux. |
+| Cached server data | Framework data layer, router loader, or query library. |
 
-A few levels of prop passing are not automatically a problem. Context becomes useful when passing the same values through unrelated intermediate components makes the code harder to follow.
+A few levels of prop passing are fine. Context earns its place when threading the same values through unrelated intermediates hurts readability.
 
-Context distributes a value; it does not store or update state on its own. A provider usually gets its state from hooks or an external store.
-
-Changing a context value updates its consumers. Split unrelated concerns rather than putting every changing field into one large provider.
-
-Also, calling the same custom hook in two components does not automatically share state. Each call gets its own hook state unless the hook connects to a shared provider or store.
+Context distributes a value; it does not store or update state. Changing it re-renders all consumers, so split unrelated concerns rather than one giant provider. Calling the same custom hook in two components does not share state unless the hook connects to a provider or store.
 
 #### `useState` replaces values
 
-When state is an object, `useState` does not merge a partial update for you.
-
-Preserve the other fields explicitly:
+For object state, `useState` does not merge. Preserve other fields explicitly, and use a functional updater when the next value depends on the previous:
 
 ```tsx
 setForm(previous => ({
@@ -1183,27 +1080,19 @@ setForm(previous => ({
 }));
 ```
 
-Use a functional updater when the next value depends on the previous one.
-
 #### `useSetState` shallow-merges updates
 
-A hook such as [`react-use`’s `useSetState`](https://github.com/streamich/react-use/blob/master/src/useSetState.ts) can make related form fields less repetitive.
-
-It merges the supplied patch into the current object:
+A hook like [`react-use`'s `useSetState`](https://github.com/streamich/react-use/blob/master/src/useSetState.ts) merges a patch into the current object:
 
 ```tsx
 setState({ name: value });
 ```
 
-That merge is **shallow**. Updating a nested object replaces that nested property unless you merge it explicitly.
-
-This is an optional convenience—not a required upgrade once a component has more than two state variables.
+The merge is **shallow**—nested objects are replaced unless merged explicitly. This is an optional convenience, not a required upgrade past two state variables.
 
 #### Reset behavior depends on the hook
 
-React’s `useState` does not return a reset function. The linked `react-use` implementation of `useSetState` returns two items: the state and its updater.
-
-If you want a reset operation, define it or choose a hook that explicitly provides one.
+Neither `useState` nor `react-use`'s `useSetState` returns a reset function; the latter returns only state and updater. Define your own or pick a hook that provides one.
 
 For a fixed-shape state object:
 
@@ -1261,17 +1150,11 @@ function ContactDraft() {
 export default ContactDraft;
 ```
 
-Because this reset uses a merge, it only resets the supplied fields. It does not remove additional properties.
-
-If resetting must replace the entire object or remove keys, use replacement semantics with `useState`, a reducer, or a hook with an explicit reset operation.
+Because this reset merges, it resets only the supplied fields and removes nothing. To replace the whole object or drop keys, use `useState`, a reducer, or a hook with explicit reset.
 
 #### Keep state minimal
 
-Avoid storing values that can be derived from existing state.
-
-For example, a required-field error can often be calculated from the current field value instead of keeping a separate error boolean synchronized with it.
-
-For asynchronous work, a status such as `'idle'`, `'loading'`, `'success'`, or `'error'` can be clearer than several booleans that allow contradictory combinations.
+Don't store what can be derived. A required-field error can be computed from the field value rather than kept in a synced boolean. For async work, a status like `'idle' | 'loading' | 'success' | 'error'` beats several booleans that permit contradictory combinations.
 
 ---
 
@@ -1279,7 +1162,7 @@ For asynchronous work, a status such as `'idle'`, `'loading'`, `'success'`, or `
 
 ## 🎨 Styling and everyday conventions
 
-Small conventions help a codebase feel consistent. They are most useful when they remove decisions without making ordinary work harder.
+Small conventions make a codebase feel consistent. They're most useful when they remove decisions without adding friction.
 
 <a id="styling-the-ui"></a>
 
@@ -1287,18 +1170,7 @@ Small conventions help a codebase feel consistent. They are most useful when the
 
 #### Use shared design tokens
 
-Keep reusable colors in a theme or a shared token module instead of scattering color literals across components.
-
-Prefer semantic names that explain the role of a color:
-
-- Background.
-- Surface.
-- Border.
-- Primary text.
-- Muted text.
-- Error text.
-
-For example:
+Keep reusable colors in a theme or token module, not scattered literals. Prefer semantic names by role: background, surface, border, primary text, muted text, error text.
 
 ```ts
 // src/components/_common/styles/Colors.ts
@@ -1334,7 +1206,7 @@ const Colors = {
 export default Colors;
 ```
 
-Here is a small component that uses those tokens. Its fixed layout lives in a CSS Module, and the inline style only carries token values, including one that changes with the component’s state:
+A component using those tokens—fixed layout in a CSS Module, inline style carrying only token values, one of which depends on state:
 
 ```css
 /* UserCard.module.css */
@@ -1386,45 +1258,33 @@ function UserCard(props: UserCardProps) {
 export default UserCard;
 ```
 
-The tokens are applied inline because they live in TypeScript. If most of your styling lives in CSS, expose the tokens as CSS custom properties so stylesheets can also use them for hover and focus states.
+Tokens are inline because they live in TypeScript. If most styling is CSS, expose them as custom properties so stylesheets can use them for hover and focus.
 
-If a component library already provides a theme, use that as the source of truth rather than maintaining a competing color system. For Material UI, that often means using the theme’s palette and semantic `sx` values.
-
-A semantic token name does not guarantee accessible contrast. Check the actual foreground/background combinations, including hover, focus, disabled, and dark-mode states.
+If a component library provides a theme, use it as the source of truth—for Material UI, the palette and semantic `sx` values—rather than a competing system. Semantic names don't guarantee accessible contrast; check real combinations including hover, focus, disabled, and dark mode.
 
 #### Choose the right styling tool
 
-Inline styles are fine for small, dynamic values.
-
-For reusable styles, responsive layouts, hover states, and focus states, use your project’s CSS, CSS Modules, theme, or styling system.
-
-Avoid introducing several styling approaches without a clear reason.
+Inline styles for small dynamic values. CSS, CSS Modules, theme, or your styling system for reusable styles, responsive layouts, hover, and focus. Don't mix several approaches without reason.
 
 #### Use interactive elements for interactions
 
-Use a button for an action and a link for navigation.
-
-A clickable `<div>` does not automatically provide keyboard interaction, focus behavior, or button semantics.
-
-Prefer native elements before rebuilding their behavior yourself.
+Button for actions, link for navigation. A clickable `<div>` provides no keyboard interaction, focus behavior, or semantics. Prefer native elements before rebuilding them.
 
 <a id="callback-parameter-names"></a>
 
 ### Callback parameter names
 
-Use names that make the callback’s input obvious:
-
 | Input | Useful name |
 | --- | --- |
 | A DOM or React event | `event` |
-| A field’s new value | `value` |
+| A field's new value | `value` |
 | An error object | `error` or `err` |
 | A boolean validation result | `isInvalid` |
 | An item from a collection | Its domain name, such as `user` or `post` |
 
-Short names such as `v` are acceptable in tiny callbacks when the meaning is obvious. Do not shorten a name if it makes readers inspect the component’s type just to understand the argument.
+Short names like `v` are fine in tiny callbacks when obvious. Don't shorten if readers must inspect the type to understand the argument.
 
-Be especially careful not to confuse an input event with the input’s value:
+Don't confuse an event with its value:
 
 ```tsx
 onChange={event => {
@@ -1432,17 +1292,15 @@ onChange={event => {
 }}
 ```
 
-For custom components, a value-based callback can keep the parent independent of DOM event details.
+For custom components, value-based callbacks keep the parent independent of DOM events. See [Example: a form with controlled inputs](#function-components-form-example).
 
-For a complete form that uses value-based callbacks, see [Example: a form with controlled inputs](#function-components-form-example).
-
-If a custom callback needs to report a validation result, use an explicit contract:
+To report a validation result, use an explicit contract:
 
 ```ts
 onChange: (value: string, isInvalid: boolean) => void;
 ```
 
-Do not make the boolean optional unless `undefined` has a meaningful role.
+Don't make the boolean optional unless `undefined` means something.
 
 <a id="other-conventions"></a>
 
@@ -1450,9 +1308,7 @@ Do not make the boolean optional unless `undefined` has a meaningful role.
 
 #### Keep formatting automatic
 
-I use single quotes in JavaScript and TypeScript, and double quotes for JSX attributes.
-
-With Prettier:
+Single quotes in JS/TS, double quotes in JSX attributes. With Prettier:
 
 ```json
 {
@@ -1461,35 +1317,31 @@ With Prettier:
 }
 ```
 
-Let the formatter handle these decisions so code reviews can focus on behavior.
+Let the formatter decide so reviews focus on behavior.
 
 #### Use stable keys
 
-For dynamic lists, use stable identifiers from the data:
+Use stable identifiers from the data:
 
 ```tsx
 users.map(user => <UserRow key={user.id} user={user} />)
 ```
 
-Do not generate a fresh key during each render.
-
-Array indexes are a poor fit when items can be inserted, removed, or reordered. `useId` is useful for accessibility relationships, not list keys.
+Never generate a fresh key per render. Indexes break when items are inserted, removed, or reordered. `useId` is for accessibility relationships, not list keys.
 
 #### Make forms and actions accessible
 
-- Associate labels with their inputs.
-- Use `type="button"` for non-submit buttons inside forms.
-- Make loading and error states understandable without relying only on color.
+- Associate labels with inputs.
+- `type="button"` for non-submit buttons in forms.
+- Loading and error states understandable without color alone.
 - Preserve visible keyboard focus.
-- Use meaningful alternative text for informative images and empty alternative text for decorative ones.
+- Meaningful alt text for informative images; empty alt for decorative ones.
 
 #### Test what the user can observe
 
-Test rendering, interactions, keyboard submission, loading states, empty states, and failure paths.
+Test rendering, interactions, keyboard submission, loading, empty, and failure states. Don't tie tests to internal state or implementation details; a refactor with unchanged user-visible behavior shouldn't break them.
 
-Avoid tying every test to internal state variables or implementation details. A refactor should not break a test when the user-visible behavior is unchanged.
-
-For example, with Vitest and React Testing Library, a test for the [contact form](#function-components-form-example) can interact with it the way a user would:
+With Vitest and React Testing Library, a test for the [contact form](#function-components-form-example) interacts like a user:
 
 ```tsx
 // ContactForm.test.tsx
@@ -1516,6 +1368,11 @@ test('submits trimmed values', async () => {
 });
 ```
 
-The test finds elements by their labels and roles, so it keeps passing if the form’s internal state changes shape.
+Finding elements by label and role keeps the test passing if internal state changes shape.
 
-The overall goal is the same as in the TypeScript guide: **clear responsibilities, predictable structure, and code that explains itself without making readers work too hard.**
+The goal matches the TypeScript guide: **clear responsibilities, predictable structure, and code that explains itself without making readers work too hard.**
+```
+
+One factual check while I was at it: the `useSetState` source confirms it returns exactly `[state, setState]` with an `Object.assign` merge, so the "no reset function" and "shallow merge" claims in your doc are accurate.
+
+Same offer as before—if you want it even shorter, the biggest remaining chunks are the duplicated `useEffect` body in `UsersContainer` and `useUsers` (you could show the hook only and reference it from the container), and the `ContactDraft` example. Want me to consolidate those?
