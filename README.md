@@ -75,6 +75,9 @@ Some of these are React fundamentals, others are house conventions. If your fram
     - styles/
       - Colors.ts
       - BoxStyles.ts
+  - layout/
+    - Header/
+    - Footer/
   - pages/
     - Home/ (https://my-site.com/home)
       - Home.tsx
