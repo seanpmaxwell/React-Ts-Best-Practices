@@ -22,7 +22,7 @@ Some of these are React fundamentals, others are house conventions. If your fram
   - [Callback parameter names](#misc-styling-callbacks)
   - [Other rules](#misc-styling-other)
 
-<br/><b>***</b><br/>
+<p align="center">· · ·</p>
 
 ## Project structure <a name="project-structure"></a>
 
@@ -129,7 +129,7 @@ Some of these are React fundamentals, others are house conventions. If your fram
 
 Snippets below use `@src/` as an alias for `src/`. Configure it in TypeScript and your build/test tools.
 
-<br/><b>***</b><br/>
+<p align="center">· · ·</p>
 
 ## Function components <a name="function-components"></a>
 
@@ -340,7 +340,7 @@ export default LoginForm;
 
 Using a real `<form>` with `type="submit"` means the keyboard works too, and the Cancel button needs `type="button"` so it doesn't submit. React 19's `useActionState` can handle the pending/error state for you, but the explicit handler works on any version.
 
-<br/><b>***</b><br/>
+<p align="center">· · ·</p>
 
 ## The Container/Presenter pattern and state management <a name="container-presenter-state-management"></a>
 
@@ -407,7 +407,7 @@ The helper leaves the user's capitalization alone rather than recasing their nam
 - Don't store what you can derive. A "field is required" error can be computed from the field's value instead of kept in a synced boolean, and a single `status: 'idle' | 'loading' | 'error'` beats several booleans that can contradict each other.
 - Context distributes a value; it doesn't own state. Changing it re-renders every consumer, so split unrelated concerns rather than making one giant provider. Calling the same custom hook in two components does *not* share state unless the hook reads from a provider or store.
 
-<br/><b>***</b><br/>
+<p align="center">· · ·</p>
 
 ## Misc styling rules <a name="misc-styling-rules"></a>
 
