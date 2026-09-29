@@ -67,7 +67,7 @@ Some of these are React fundamentals, others are house conventions. If your fram
   - utils/
 - components/
   - _common/
-    - ui/  <-- group by purpose, not size labels like sm/md/lg
+    - elements/  <-- group by purpose, not size labels like sm/md/lg
       - buttons/
       - dialogs/
     - hooks/
