@@ -233,7 +233,7 @@ export default Parent;
 ```
 
 ### Working with props <a name="functional-components-props"></a>
-- Destructure props at the top of the component. It's easier to set defaults and spot unused values, and wrapper components can mirror the child's props by reusing the same names.
+- Destructure props in the function signature. It's easier to set defaults and spot unused values, and wrapper components can mirror the child's props by reusing the same names.
 - In wrapper components, separate the props you handle from the ones you forward, and don't forward internal-only props to DOM elements. Be careful with styling props: MUI's `sx` can be an object, array, or function, so spreading it as an object isn't reliable.
 - Snippet 3 shows how to extract props, separate regions, and organize hooks.
 
@@ -259,8 +259,7 @@ import Indicator from '@src/components/_common/ui/Indicator';
 /**
  * Default component. Log in a user.
  */
-function LoginForm(props: BoxProps<'form'>) {
-  const { sx, ...otherProps } = props;
+function LoginForm({ sx, ...otherProps }: BoxProps<'form'>) {
   const navigate = useNavigate();
 
   // Init state
@@ -374,11 +373,11 @@ This is a plain read with no business workflow, so the container calls `UserApi`
 
 ```tsx
 // UsersList.tsx – presenter
-interface IUsersListProps {
+interface UsersListProps {
   users: User[];
 }
 
-function UsersList({ users }: IUsersListProps) {
+function UsersList({ users }: UsersListProps) {
   return (
     <ul>
       {users.map(user => (
@@ -496,6 +495,13 @@ Inline styles are fine for small dynamic values like these. Reusable styles, hov
 #### Snippet 6
 
 ```tsx
+interface CustomInputProps {
+  label: string;
+  value: string;
+  isRequired?: boolean;
+  onChange: (value: string) => void;
+}
+
 function Parent() {
   const [state, setState] = useSetState({ name: '', email: '' });
   const isMissingRequired = !state.name.trim() || !state.email.trim();
@@ -524,12 +530,12 @@ function Parent() {
   );
 }
 
-function CustomInput(props: {
+function CustomInput({
   label: string;
   value: string;
   isRequired?: boolean;
   onChange: (value: string) => void;
-}) {
+}: CustomInputProps) {
   const { label, value, isRequired = false, onChange } = props;
   const isMissing = isRequired && !value.trim(); // derived, not stored
   return (
